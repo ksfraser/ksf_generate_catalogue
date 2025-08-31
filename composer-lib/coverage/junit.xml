@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests" tests="6" assertions="9" errors="0" warnings="0" failures="0" skipped="0" time="0.043196">
+    <testsuite name="Ksfraser\Frontaccounting\GenCat\Tests\Unit\BaseCatalogueGeneratorTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\BaseCatalogueGeneratorTest.php" tests="6" assertions="9" errors="0" warnings="0" failures="0" skipped="0" time="0.043196">
+      <testcase name="testConstructorSetsDefaults" class="Ksfraser\Frontaccounting\GenCat\Tests\Unit\BaseCatalogueGeneratorTest" classname="Ksfraser.Frontaccounting.GenCat.Tests.Unit.BaseCatalogueGeneratorTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\BaseCatalogueGeneratorTest.php" line="66" assertions="3" time="0.041701"/>
+      <testcase name="testSettersAndGetters" class="Ksfraser\Frontaccounting\GenCat\Tests\Unit\BaseCatalogueGeneratorTest" classname="Ksfraser.Frontaccounting.GenCat.Tests.Unit.BaseCatalogueGeneratorTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\BaseCatalogueGeneratorTest.php" line="83" assertions="2" time="0.000246"/>
+      <testcase name="testDatabaseInterface" class="Ksfraser\Frontaccounting\GenCat\Tests\Unit\BaseCatalogueGeneratorTest" classname="Ksfraser.Frontaccounting.GenCat.Tests.Unit.BaseCatalogueGeneratorTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\BaseCatalogueGeneratorTest.php" line="100" assertions="1" time="0.000505"/>
+      <testcase name="testSetFileName" class="Ksfraser\Frontaccounting\GenCat\Tests\Unit\BaseCatalogueGeneratorTest" classname="Ksfraser.Frontaccounting.GenCat.Tests.Unit.BaseCatalogueGeneratorTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\BaseCatalogueGeneratorTest.php" line="120" assertions="1" time="0.000126"/>
+      <testcase name="testEmailFileWithValidConfig" class="Ksfraser\Frontaccounting\GenCat\Tests\Unit\BaseCatalogueGeneratorTest" classname="Ksfraser.Frontaccounting.GenCat.Tests.Unit.BaseCatalogueGeneratorTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\BaseCatalogueGeneratorTest.php" line="148" assertions="1" time="0.000480"/>
+      <testcase name="testEmailFileWithoutMailto" class="Ksfraser\Frontaccounting\GenCat\Tests\Unit\BaseCatalogueGeneratorTest" classname="Ksfraser.Frontaccounting.GenCat.Tests.Unit.BaseCatalogueGeneratorTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\BaseCatalogueGeneratorTest.php" line="168" assertions="1" time="0.000138"/>
+    </testsuite>
+  </testsuite>
+</testsuites>

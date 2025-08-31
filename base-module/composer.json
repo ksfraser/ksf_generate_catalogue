@@ -1,0 +1,22 @@
+{
+    "name": "ksfraser/frontaccounting-gencat-module",
+    "description": "FrontAccounting Generate Catalogue Base Module",
+    "type": "frontaccounting-module",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "KS Fraser",
+            "email": "kevin@ksfraser.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "ksfraser/frontaccounting-gencat": "^1.0"
+    },
+    "autoload": {
+        "files": [
+            "class.ksf_generate_catalogue.php",
+            "ksf_generate_catalogue.inc.php"
+        ]
+    }
+}
