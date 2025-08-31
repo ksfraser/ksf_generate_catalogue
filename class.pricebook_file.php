@@ -32,7 +32,12 @@ class pricebook_file extends labels_file
 		$rowcount=0;
 		while ($row = db_fetch($result)) 
 		{
-			$this->write_sku_labels_line( $row['stock_id'], $row['category'], $row['description'], $row['price'] );
+			/** Mantis 3228 generate SKU without '*' for thermal printer - add ->thermal_printer var
+				While printing labels is printer dependant, the pricebook is more of a printed catalogue
+				so we probably want to continue using 3of9 rather than thermal.
+				Hardcoding false rather than ->thermal_printer
+			 **/
+			$this->write_sku_labels_line( $row['stock_id'], $row['category'], $row['description'], $row['price'], false );
 			$rowcount++;
 		}
 		$this->write_file->close();

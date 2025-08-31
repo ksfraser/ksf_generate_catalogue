@@ -42,6 +42,10 @@ class labels_file extends ksf_generate_catalogue
 		$this->query = "select s.stock_id as stock_id, s.description as description, q.instock as instock, c.description as category, 0 as price from " . TB_PREF . "stock_master s, " . TB_PREF . "ksf_qoh q, " . TB_PREF . "stock_category c where s.inactive=0 and s.stock_id=q.stock_id and s.category_id = c.category_id order by c.description, s.description";
 
 	}
+	/**//****************************************************************
+	*
+	*
+	*********************************************************************/
 	//INHERIT function prep_write_file()
 	//CALLED by ksf_generate_catalogue::create_sku_labels()
 	/*@int@*/function create_file()
@@ -61,7 +65,8 @@ class labels_file extends ksf_generate_catalogue
 			//If we have 6 items instock, we need 6 labels to print so we can put on product
 			for( $num; $num > 0; $num-- )
 			{
-				$this->write_sku_labels_line( $row['stock_id'], $row['category'], $row['description'], $row['price'] );
+				/** Mantis 3228 generate SKU without '*' for thermal printer - add ->thermal_printer var **/
+				$this->write_sku_labels_line( $row['stock_id'], $row['category'], $row['description'], $row['price'],  $this->thermal_printer  );
 				$rowcount++;
 			}
 		}
@@ -70,6 +75,10 @@ class labels_file extends ksf_generate_catalogue
 			$this->email_file();
 		return $rowcount;	
 	}
+	/**//****************************************************************
+	*
+	*
+	*********************************************************************/
 	/*@int@*/function create_sku_catalogs()
 	{
 			return 0;
@@ -141,7 +150,8 @@ class labels_file extends ksf_generate_catalogue
 				//If we have 6 items instock, we need 6 labels to print so we can put on product
 				for( $num; $num > 0; $num-- )
 				{
-					$this->write_sku_labels_line( $row['item_code'], "", $row['description'], $price );
+					/** Mantis 3228 generate SKU without '*' for thermal printer - add ->thermal_printer var **/
+					$this->write_sku_labels_line( $row['item_code'], "", $row['description'], $price,  $this->thermal_printer );
 					$rowcount++;
 				}
 			}
@@ -190,6 +200,65 @@ class labels_file extends ksf_generate_catalogue
 	/*@bool@*/function catalog_export_by_PO_Delivery()
 	{
 		return FALSE;
+	}
+	/*************************************************************************************//**
+	* Generate label from stock_id
+	*
+	* @since 20250227
+	*
+	* @param none uses internal
+	* @returns int 1 - number of "rows" for the single stock id
+	*****************************************************************************************/
+	/*@int@*/function create_sku_labels_from_sku()
+	{
+		//display_notification( __FILE__ . "::" . __LINE__ . "::" . __METHOD__ );
+		if( ! isset( $this->stock_id ) OR  strlen( $this->stock_id ) < 1 )
+		{
+			throw new Exception( "stock_id invalid!", KSF_FIELD_NOT_SET );
+		}
+		$this->filename = $this->stock_id . "_labels.csv";
+		$this->prep_write_file();
+		$this->write_file->write_line( $this->hline );
+		$category = ""; 
+		$price = 0;
+
+		require_once( '../ksf_modules_common/class.fa_stock_master.php' );
+		$sm = new fa_stock_master( $this->prefs_tablename );
+		$row = $sm->getStock_ID( $this->stock_id );
+		//display_notification( __FILE__ . "::" . __LINE__ . "::" );
+	        if( $this->debug > 1 )
+	        {
+			var_dump( $row );
+		} 
+		require_once( '../ksf_modules_common/class.fa_sales_types.php' );
+		$st = new fa_sales_types( $this );
+		$sales_type_id = $st->get_sales_type_from_name( $this->RETAIL_type );
+		//display_notification( __FILE__ . "::" . __LINE__ . "::" . "Sales type id: " . print_r( $sales_type_id, true ) );
+
+		require_once( '../ksf_modules_common/class.fa_prices.php' );
+		$faprice = new fa_prices( $this );
+		$faprice->set( "sales_type_id", $sales_type_id );
+		$faprice->set( "stock_id", $this->stock_id );
+		$faprice->set( "curr_abrev", "CAD" );		//We should probably have either a config variable, or grab the system default!
+		$price = $faprice->get_stock_price();
+			//display_notification( __FILE__ . "::" . __LINE__ . "::" . "price: " . print_r( $faprice, true ) );
+		//display_notification( __FILE__ . "::" . __LINE__ . "::" . "price: " . print_r( $price, true ) );
+
+		require_once( '../ksf_modules_common/class.fa_stock_category.php' );
+		$sc = new fa_stock_category( $this );
+		$sc->set( "category_id", $row['category_id'] );
+		$res = $sc->get_category_name();
+		//display_notification( __FILE__ . "::" . __LINE__ . "::" . "CAT: " . print_r( $res, true ) );
+		if( isset( $res['description'] ) )
+		{
+			$category = $res['description'];
+		}
+		
+		$this->write_sku_labels_line( $this->stock_id, $category, $row['description'], $price,  $this->thermal_printer );
+		$this->write_file->close();
+			$this->email_file();
+			//$this->email_price_book();	//email_price_book doesn't exist
+		return 1;
 	}
 
 }

@@ -53,13 +53,19 @@ class ksf_generate_catalogue extends generic_fa_interface
 	var $CUSTOM_LABEL;     //!<string 
 	var $CUSTOM_PREFIX;    //!<string 
 	var $CUSTOM_CATEGORIES;    //!<string 
+	var $PRIMARY_LOC;
+	var $SECONDARY_LOC;
 	var $max_rows_file;		//!<int maximum rows per output file
 	var $file_count;
 	var $file_base;		//!<string base of output filename.  Will be $file_base_$file_count.$file_ext
 	var $file_ext;		//!<string extension of file
 	var $sort_by;		//!<string sort by price/details
+	protected $stock_id;	//!<string the stock_id we want to create a single CSV for.  MANTIS 3228
+	var $thermal_printer;	//!<bool Are we using a thermal printer or Avery Labels with 3of9     	MANTIS 3228
 //20241102 I haven't designed how I am going to use this field yet!
 	var $use_price_change_for_sales;	//!<char should we use price change dates for sales dates?
+	protected $TEST_DATE;
+
 	function __construct( $prefs_tablename )
 	{
 		simple_page_mode(true);
@@ -93,12 +99,15 @@ class ksf_generate_catalogue extends generic_fa_interface
 		$this->config_values[] = array( 'pref_name' => 'smtp_port', 'label' => 'Mail Server Port (25/993)' );
 		$this->config_values[] = array( 'pref_name' => 'smtp_user', 'label' => 'Mail Server User' );
 		$this->config_values[] = array( 'pref_name' => 'smtp_passs', 'label' => 'Mail Server Password' );
-		$this->config_values[] = array( 'pref_name' => 'b_email', 'label' => 'Send file by email' );
+		$this->config_values[] = array( 'pref_name' => 'b_email', 'label' => 'Send file by email', 'type' => 'yesno_list' );
 		$this->config_values[] = array( 'pref_name' => 'debug', 'label' => 'Debug (0,1+)' );
+		$this->config_values[] = array( 'pref_name' => 'PRIMARY_LOC', 'label' => 'Primary Retail Location for Inventory string (default HG)', 'type' => 'location' );
+		$this->config_values[] = array( 'pref_name' => 'SECONDARY_LOC', 'label' => 'Secondary Retail Location for Inventory string (default HOLD)', 'type' => 'location' );
 		$this->config_values[] = array( 'pref_name' => 'RETAIL_type', 'label' => 'Retail Pricebook (sales_type_id) string' );
 		$this->config_values[] = array( 'pref_name' => 'SALEPRICE_type', 'label' => 'Sales Pricing Pricebook (sales_type_id) string' );
 		$this->config_values[] = array( 'pref_name' => 'SALE_START_DATE', 'label' => 'Sale Start Date YYYY-MM-DD' );
 		$this->config_values[] = array( 'pref_name' => 'SALE_END_DATE', 'label' => 'Sale End Date YYYY-MM-DD' );
+	//	$this->config_values[] = array( 'pref_name' => 'TEST_DATE', 'label' => 'TEST Date YYYY-MM-DD', 'type' => 'dateselector', 'lead_days' => 0, 'lead_months' = 0, 'lead_years' => 0 );
 		$this->config_values[] = array( 'pref_name' => 'DISCONTINUED_SALE_START_DATE', 'label' => 'Discontinued Sale Start Date YYYY-MM-DD' );
 		$this->config_values[] = array( 'pref_name' => 'DISCONTINUED_SALE_END_DATE', 'label' => 'Discontinued Sale End Date YYYY-MM-DD' );
 		$this->config_values[] = array( 'pref_name' => 'DISCONTINUED_LABEL', 'label' => 'Discontinued Label on products e.g. --DISCONTINUED' );
@@ -116,6 +125,8 @@ class ksf_generate_catalogue extends generic_fa_interface
 		$this->config_values[] = array( 'pref_name' => 'CUSTOM_PREFIX', 'label' => 'Custom Order Prefix Character e.g. #' );
 		$this->config_values[] = array( 'pref_name' => 'CUSTOM_CATEGORIES', 'label' => 'Special Order Categories e.g. customorder' );
 		$this->config_values[] = array( 'pref_name' => 'max_rows_file', 'label' => 'Maximum rows per file' );
+		/** Mantis 3228 generate SKU without '*' for thermal printer - add ->thermal_printer var **/
+		$this->config_values[] = array( 'pref_name' => 'thermal_printer', 'label' => ' Are we using a thermal printer (T) or Avery Labels with 3of9(F) (bool)' );
 //20241102 I haven't designed how I am going to use this field yet!
 		//$this->config_values[] = array( 'pref_name' => 'use_price_change_for_sales', 'label' => 'Use the pricing last changed date for sales date? (T/F)' );
 		$this->dolabels = 0;
@@ -130,6 +141,8 @@ class ksf_generate_catalogue extends generic_fa_interface
 		$this->tabs[] = array( 'title' => 'Generate Catalogue', 'action' => 'gencat', 'form' => 'form_pricebook', 'hidden' => TRUE );
 		$this->tabs[] = array( 'title' => 'Lables for a Purchase Order', 'action' => 'polabelsfile', 'form' => 'polabelsfile_form', 'hidden' => FALSE );
 		$this->tabs[] = array( 'title' => 'Labels Generated', 'action' => 'label_export_by_PO_Delivery', 'form' => 'label_export_by_PO_Delivery', 'hidden' => TRUE );
+		$this->tabs[] = array( 'title' => 'Lables for a Stock_id (SKU)', 'action' => 'skulabelsfile', 'form' => 'skulabelsfile_form', 'hidden' => FALSE );
+		$this->tabs[] = array( 'title' => 'Lable for a Stock_id (SKU)', 'action' => 'skulabelsfile_done', 'form' => 'skulabelsfile_done', 'hidden' => TRUE );
 		//We could be looking for plugins here, adding menu's to the items.
 		$this->add_submodules();
 	/*	
@@ -170,6 +183,10 @@ class ksf_generate_catalogue extends generic_fa_interface
 			throw $e;
 		}
 	}
+	/*******************************************************************//**
+	*
+	*
+	************************************************************************/
 	//CALLED by form_pricebook
 	/*@int@*/function create_price_book()
 	{
@@ -218,6 +235,10 @@ class ksf_generate_catalogue extends generic_fa_interface
 			return $rowcount;
 		}
 	}
+	/*******************************************************************//**
+	*
+	*
+	************************************************************************/
 	//Called by form_pricebook
 	/*@int@*/function create_sku_labels()
 	{
@@ -229,20 +250,12 @@ class ksf_generate_catalogue extends generic_fa_interface
 				$value = $arr["pref_name"];
 				$lf->$value = $this->$value;
 			}
+			if( isset( $this->stock_id ) )
+			{
+				$lf->set( "stock_id", $this->stock_id );
+			}
 			$rowcount = $lf->create_file();
 			$lf->email_file();
-/** 20230605 This is running twice, no need.
-			if( include_once( 'class.square_catalog.php' ) )
-			{
-				$sc = new square_catalog( $this->prefs_tablename );
-				foreach( $this->config_values as $arr )
-				{
-					$value = $arr["pref_name"];
-					$sc->$value = $this->$value;
-				}
-				$rowcount2 = $sc->create_file();
-			}
-**/
 			return $rowcount;
 		}
 		else
@@ -250,6 +263,10 @@ class ksf_generate_catalogue extends generic_fa_interface
 	}
  
 	
+	/*******************************************************************//**
+	*
+	*
+	************************************************************************/
 	function email_file( $email_subject = 'Pricebook file' )
 	{
 		if( isset( $this->mailto ) )
@@ -272,6 +289,10 @@ class ksf_generate_catalogue extends generic_fa_interface
 		}
 		return FALSE;
 	}
+	/*******************************************************************//**
+	*
+	*
+	************************************************************************/
 	function form_pricebook()
 	{
 		$this->create_price_book();
@@ -283,6 +304,10 @@ class ksf_generate_catalogue extends generic_fa_interface
 		}
 		$this->call_table( '', "OK" );
 	}
+	/*******************************************************************//**
+	*
+	*
+	************************************************************************/
 	function write_file_form()
 	{
 		if( $this->dolabels)
@@ -290,6 +315,79 @@ class ksf_generate_catalogue extends generic_fa_interface
 		else
 			$this->call_table( 'gencat', "Create Catalogue File" );
 	}
+	/*******************************************************************//**
+	* Form to request the stock_id to generate a label
+	*
+	* @since 20250227
+	*
+	* @param none
+	* @return none
+	************************************************************************/
+	function skulabelsfile_form()
+	{
+	 	$selected_id = 1;
+                $none_option = "";
+                $submit_on_change = FALSE;
+                $all = FALSE;
+                $all_items = TRUE;
+                $mode = 1;
+                $spec_option = "";
+                start_form(true);
+                start_table(TABLESTYLE2, "width=40%");
+                table_section_title("Labels by Stock_ID");
+                text_row("SKU to generate the label", 'stock_id', "", STOCK_ID_LENGTH, STOCK_ID_LENGTH);
+                end_table(1);
+                hidden('action', 'skulabelsfile_done');
+                submit_center('skulabelsfile', "Generate Label for SKU");
+                end_form();
+	}
+	/******************************************************************************//**
+	* Given a PO number create the labels for the items in that PO
+	*
+	*
+	* @returns bool
+	*********************************************************************************/
+	/*@bool@*/function skulabelsfile_done()
+	{
+		if( !isset( $this->stock_id ) )
+		{
+			if( isset( $_POST['stock_id'] ) )
+				$this->stock_id = $_POST['stock_id'];
+		}
+		
+		if( include_once( 'class.labels_file.php' ) )
+		{
+			$lf = new labels_file( $this->prefs_tablename );
+			$lf->set( "stock_id", $this->stock_id );
+			foreach( $this->config_values as $arr )
+			{
+				if( isset( $arr['title'] ) )
+				{
+					foreach( $arr['title'] as $value )
+					{
+						$lf->$value = $this->$value;
+					}
+				}
+				else
+				{
+					//20230903 This was printing the PREFS always!
+					if( $this->debug > 1 )
+					{
+						echo "<br />";
+						var_dump( $arr );
+						echo "<br />";
+					}
+				}
+			}
+			$count = $lf->create_sku_labels_from_sku();
+		}
+		return TRUE;
+	}
+
+	/*******************************************************************//**
+	*
+	*
+	************************************************************************/
 	function polabelsfile_form()
 	{
 	 	$selected_id = 1;
@@ -323,6 +421,10 @@ class ksf_generate_catalogue extends generic_fa_interface
 
 	//	$this->call_table( 'polabels', "Create Labels" );
 	}
+	/*******************************************************************//**
+	*
+	*
+	************************************************************************/
 	function label_export()
 	{
 			$this->filename = "delivery_" . $this->delivery_no . "_labels.csv";

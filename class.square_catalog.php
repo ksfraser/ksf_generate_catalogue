@@ -106,7 +106,7 @@ class square_catalog extends pricebook_file
 					from 
 						" . TB_PREF . "stock_moves c 
 					where 
-						c.loc_code='HG' 
+						c.loc_code='" . $this->PRIMARY_LOC . "' 
 					group by c.stock_id 
 					) as c
 				on " . TB_PREF . "stock_master.stock_id=c.stock_id
@@ -118,7 +118,7 @@ class square_catalog extends pricebook_file
 					from 
 						" . TB_PREF . "stock_moves b 
 					where 
-						b.loc_code='HOLD' 
+						b.loc_code='" . $this->SECONDARY_LOC . "' 
 					group by b.stock_id 
 					) as b
 				on " . TB_PREF . "stock_master.stock_id=b.stock_id
@@ -136,14 +136,14 @@ class square_catalog extends pricebook_file
 						" . TB_PREF . "loc_stock r
             				where   
 						s.category_id = c.category_id and 
-						r.loc_code='HG' and 
+						r.loc_code='" . $this->PRIMARY_LOC . "' and 
 						r.stock_id=s.stock_id 
 					) as a
 				ON a.stock_id = " . TB_PREF . "stock_master.stock_id
 				";
 /*
 				where 
-					" . TB_PREF . "stock_master.loc_code='HG' 
+					" . TB_PREF . "stock_master.loc_code='" . $this->PRIMARY_LOC . "' 
 				group by 
 					" . TB_PREF . "stock_master.stock_id ";
 */
