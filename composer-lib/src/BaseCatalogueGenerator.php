@@ -29,7 +29,7 @@ use Exception;
  * @author  KS Fraser <kevin@ksfraser.com>
  * @since   1.0.0
  */
-abstract class BaseCatalogueGenerator
+abstract class BaseCatalogueGenerator implements GeneratorMetadataInterface
 {
     /**
      * Whether to include headers in output files
@@ -622,6 +622,53 @@ abstract class BaseCatalogueGenerator
      * @since 1.0.0
      */
     abstract public function createFile();
+
+    /**
+     * Default implementation of getGeneratorMetadata
+     * 
+     * Subclasses should override this method to provide their specific metadata
+     * 
+     * @return array Generator metadata
+     * @since 1.0.0
+     */
+    public static function getGeneratorMetadata()
+    {
+        $className = static::class;
+        $shortClassName = substr($className, strrpos($className, '\\') + 1);
+        
+        return [
+            'name' => strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $shortClassName)),
+            'title' => preg_replace('/([a-z])([A-Z])/', '$1 $2', $shortClassName),
+            'class' => $shortClassName,
+            'description' => 'Generate catalogue file using ' . $shortClassName,
+            'method' => 'create' . $shortClassName,
+            'category' => 'catalogue',
+            'version' => '1.0.0',
+            'author' => 'KS Fraser'
+        ];
+    }
+
+    /**
+     * Default implementation of getGeneratorPriority
+     * 
+     * @return int Default priority is 100
+     * @since 1.0.0
+     */
+    public static function getGeneratorPriority()
+    {
+        return 100;
+    }
+
+    /**
+     * Default implementation of isGeneratorAvailable
+     * 
+     * @return bool Always returns true by default
+     * @since 1.0.0
+     */
+    public static function isGeneratorAvailable()
+    {
+        return true;
+    }
 
     // Getters and setters for configuration
     

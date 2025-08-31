@@ -18,6 +18,35 @@ class WooPOSCount extends BaseCatalogueGenerator
     }
 
     /**
+     * Get generator metadata for dynamic discovery
+     * 
+     * @return array Generator metadata
+     */
+    public static function getGeneratorMetadata()
+    {
+        return [
+            'name' => 'woopos',
+            'title' => 'WooPOS Count',
+            'class' => 'WooPOSCount',
+            'description' => 'Generate WooCommerce POS inventory count CSV file',
+            'method' => 'createWooPOSCount',
+            'category' => 'inventory',
+            'version' => '1.0.0',
+            'author' => 'KS Fraser'
+        ];
+    }
+
+    /**
+     * Get the priority/order for this generator
+     * 
+     * @return int Priority order (30 = lower priority)
+     */
+    public static function getGeneratorPriority()
+    {
+        return 30; // Lower priority - specialized use case
+    }
+
+    /**
      * Set the SQL query for retrieving WooPOS count data
      */
     public function setQuery()

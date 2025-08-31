@@ -17,6 +17,35 @@ class SquareCatalog extends PricebookFile
     }
 
     /**
+     * Get generator metadata for dynamic discovery
+     * 
+     * @return array Generator metadata
+     */
+    public static function getGeneratorMetadata()
+    {
+        return [
+            'name' => 'square',
+            'title' => 'Square Catalog',
+            'class' => 'SquareCatalog',
+            'description' => 'Generate Square catalog import CSV file for POS integration',
+            'method' => 'createSquareCatalog',
+            'category' => 'pos',
+            'version' => '1.0.0',
+            'author' => 'KS Fraser'
+        ];
+    }
+
+    /**
+     * Get the priority/order for this generator
+     * 
+     * @return int Priority order (20 = medium priority)
+     */
+    public static function getGeneratorPriority()
+    {
+        return 25; // Medium priority
+    }
+
+    /**
      * Set the SQL query for retrieving Square catalog data
      */
     public function setQuery()

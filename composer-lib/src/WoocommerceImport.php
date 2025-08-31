@@ -21,6 +21,35 @@ class WoocommerceImport extends BaseCatalogueGenerator
     }
 
     /**
+     * Get generator metadata for dynamic discovery
+     * 
+     * @return array Generator metadata
+     */
+    public static function getGeneratorMetadata()
+    {
+        return [
+            'name' => 'woocommerce',
+            'title' => 'WooCommerce Import',
+            'class' => 'WoocommerceImport',
+            'description' => 'Generate WooCommerce product import CSV file',
+            'method' => 'createWoocommerceImport',
+            'category' => 'ecommerce',
+            'version' => '1.0.0',
+            'author' => 'KS Fraser'
+        ];
+    }
+
+    /**
+     * Get the priority/order for this generator
+     * 
+     * @return int Priority order (20 = medium priority)
+     */
+    public static function getGeneratorPriority()
+    {
+        return 20; // Medium priority
+    }
+
+    /**
      * Set the SQL query for retrieving WooCommerce catalog data
      */
     public function setQuery()

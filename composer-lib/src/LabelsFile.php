@@ -21,6 +21,35 @@ class LabelsFile extends BaseCatalogueGenerator
     }
 
     /**
+     * Get generator metadata for dynamic discovery
+     * 
+     * @return array Generator metadata
+     */
+    public static function getGeneratorMetadata()
+    {
+        return [
+            'name' => 'labels',
+            'title' => 'Labels File',
+            'class' => 'LabelsFile',
+            'description' => 'Generate product labels CSV file for printing',
+            'method' => 'createLabelsFile',
+            'category' => 'printing',
+            'version' => '1.0.0',
+            'author' => 'KS Fraser'
+        ];
+    }
+
+    /**
+     * Get the priority/order for this generator
+     * 
+     * @return int Priority order (50 = lower priority, usually used separately)
+     */
+    public static function getGeneratorPriority()
+    {
+        return 50; // Lower priority - usually used separately from catalogue generation
+    }
+
+    /**
      * Create the labels CSV file
      * 
      * @return int Number of rows processed

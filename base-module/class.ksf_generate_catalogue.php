@@ -172,6 +172,13 @@ class ksf_generate_catalogue extends generic_fa_interface
         $this->tabs[] = array( 'title' => 'Install Module', 'action' => 'create', 'form' => 'install', 'hidden' => TRUE );
         $this->tabs[] = array( 'title' => 'Export File', 'action' => 'exportfile', 'form' => 'write_file_form', 'hidden' => FALSE );
         $this->tabs[] = array( 'title' => 'Generate Catalogue', 'action' => 'gencat', 'form' => 'form_pricebook', 'hidden' => TRUE );
+        
+        // Add individual generator tabs
+        $this->tabs[] = array( 'title' => 'Pricebook Generated', 'action' => 'gen_pricebook', 'form' => 'form_individual_pricebook', 'hidden' => TRUE );
+        $this->tabs[] = array( 'title' => 'Square Catalog Generated', 'action' => 'gen_square', 'form' => 'form_individual_square', 'hidden' => TRUE );
+        $this->tabs[] = array( 'title' => 'WooCommerce Import Generated', 'action' => 'gen_woocommerce', 'form' => 'form_individual_woocommerce', 'hidden' => TRUE );
+        $this->tabs[] = array( 'title' => 'WooPOS Count Generated', 'action' => 'gen_woopos', 'form' => 'form_individual_woopos', 'hidden' => TRUE );
+        
         $this->tabs[] = array( 'title' => 'Labels for a Purchase Order', 'action' => 'polabelsfile', 'form' => 'polabelsfile_form', 'hidden' => FALSE );
         $this->tabs[] = array( 'title' => 'Labels Generated', 'action' => 'label_export_by_PO_Delivery', 'form' => 'label_export_by_PO_Delivery', 'hidden' => TRUE );
         $this->tabs[] = array( 'title' => 'Labels for a Stock_id (SKU)', 'action' => 'skulabelsfile', 'form' => 'skulabelsfile_form', 'hidden' => FALSE );
@@ -345,6 +352,178 @@ class ksf_generate_catalogue extends generic_fa_interface
     }
 
     /**
+     * Get available catalogue generators dynamically
+     * 
+     * @return array Array of generator information with keys: 'name', 'title', 'action', 'method'
+     */
+    private function getAvailableGenerators()
+    {
+        // If composer factory is available, use its dynamic list
+        if ($this->catalogueFactory) {
+            try {
+                $factoryGenerators = $this->catalogueFactory->getAvailableGenerators();
+                $generators = [];
+                
+                foreach ($factoryGenerators as $gen) {
+                    // Skip labels as it's handled separately
+                    if ($gen['name'] !== 'labels') {
+                        $generators[] = [
+                            'name' => $gen['name'],
+                            'title' => $gen['title'],
+                            'action' => 'gen_' . $gen['name'],
+                            'method' => $gen['method'],
+                            'description' => $gen['description']
+                        ];
+                    }
+                }
+                
+                return $generators;
+            } catch (Exception $e) {
+                // Fall back to static list if factory method fails
+            }
+        }
+        
+        // Static fallback list for when composer library is not available
+        return [
+            [
+                'name' => 'pricebook',
+                'title' => 'Pricebook File',
+                'action' => 'gen_pricebook', 
+                'method' => 'createPricebookFile',
+                'description' => 'Generate pricebook CSV file'
+            ],
+            [
+                'name' => 'square',
+                'title' => 'Square Catalog',
+                'action' => 'gen_square',
+                'method' => 'createSquareCatalog', 
+                'description' => 'Generate Square catalog import file'
+            ],
+            [
+                'name' => 'woocommerce', 
+                'title' => 'WooCommerce Import',
+                'action' => 'gen_woocommerce',
+                'method' => 'createWoocommerceImport',
+                'description' => 'Generate WooCommerce product import CSV'
+            ],
+            [
+                'name' => 'woopos',
+                'title' => 'WooPOS Count',
+                'action' => 'gen_woopos',
+                'method' => 'createWooPOSCount',
+                'description' => 'Generate WooPOS inventory count file'
+            ]
+        ];
+    }
+
+    /**
+     * Create a single generator file by type
+     *
+     * @param string $generatorType The type of generator to create
+     * @return int Number of rows created
+     */
+    private function createSingleGenerator($generatorType)
+    {
+        $config = $this->getConfigArray();
+        $rowcount = 0;
+        
+        if ($this->catalogueFactory) {
+            try {
+                switch ($generatorType) {
+                    case 'pricebook':
+                        $generator = $this->catalogueFactory->createPricebookFile($config);
+                        break;
+                    case 'square':
+                        $generator = $this->catalogueFactory->createSquareCatalog($config);
+                        break;
+                    case 'woocommerce':
+                        $generator = $this->catalogueFactory->createWoocommerceImport($config);
+                        break;
+                    case 'woopos':
+                        $generator = $this->catalogueFactory->createWooPOSCount($config);
+                        break;
+                    default:
+                        throw new Exception("Unknown generator type: $generatorType");
+                }
+                
+                $rowcount = $generator->createFile();
+                $this->email_file("Generated $generatorType file");
+                
+            } catch (Exception $e) {
+                display_notification("Error generating $generatorType: " . $e->getMessage());
+                return $this->createSingleGeneratorLegacy($generatorType);
+            }
+        } else {
+            return $this->createSingleGeneratorLegacy($generatorType);
+        }
+        
+        return $rowcount;
+    }
+
+    /**
+     * Create single generator using legacy classes (fallback)
+     *
+     * @param string $generatorType The type of generator to create
+     * @return int Number of rows created
+     */
+    private function createSingleGeneratorLegacy($generatorType)
+    {
+        $rowcount = 0;
+        
+        switch ($generatorType) {
+            case 'pricebook':
+                if (include_once('class.pricebook_file.php')) {
+                    $pb = new pricebook_file($this->prefs_tablename);
+                    $this->applyConfigToLegacyClass($pb);
+                    $rowcount = $pb->create_file();
+                }
+                break;
+                
+            case 'square':
+                if (include_once('class.square_catalog.php')) {
+                    $sc = new square_catalog($this->prefs_tablename);
+                    $this->applyConfigToLegacyClass($sc);
+                    $rowcount = $sc->create_file();
+                }
+                break;
+                
+            case 'woocommerce':
+                if (include_once('class.woocommerce_import.php')) {
+                    $wc = new woocommerce_import($this->prefs_tablename);
+                    $this->applyConfigToLegacyClass($wc);
+                    $wc->setQuery();
+                    $rowcount = $wc->create_file();
+                }
+                break;
+                
+            case 'woopos':
+                if (include_once('class.WooPOS_Count.php')) {
+                    $woopos = new WooPOS_Count_file($this->prefs_tablename);
+                    $this->applyConfigToLegacyClass($woopos);
+                    $rowcount = $woopos->create_file();
+                }
+                break;
+        }
+        
+        return $rowcount;
+    }
+
+    /**
+     * Apply configuration to legacy class instances
+     *
+     * @param object $classInstance The legacy class instance
+     */
+    private function applyConfigToLegacyClass($classInstance)
+    {
+        foreach ($this->config_values as $arr) {
+            $value = $arr["pref_name"];
+            if (isset($this->$value)) {
+                $classInstance->$value = $this->$value;
+            }
+        }
+    }
+
+    /**
      * Get configuration as array for composer library
      */
     private function getConfigArray()
@@ -397,12 +576,89 @@ class ksf_generate_catalogue extends generic_fa_interface
         $this->call_table( '', "OK" );
     }
 
+    /**
+     * Individual generator form handlers
+     */
+    function form_individual_pricebook()
+    {
+        $rowcount = $this->createSingleGenerator('pricebook');
+        display_notification("Pricebook file generated with $rowcount rows.");
+        $this->call_table('', "Pricebook Generated Successfully");
+    }
+    
+    function form_individual_square()
+    {
+        $rowcount = $this->createSingleGenerator('square');
+        display_notification("Square catalog generated with $rowcount rows.");
+        $this->call_table('', "Square Catalog Generated Successfully");
+    }
+    
+    function form_individual_woocommerce()
+    {
+        $rowcount = $this->createSingleGenerator('woocommerce');
+        display_notification("WooCommerce import file generated with $rowcount rows.");
+        $this->call_table('', "WooCommerce Import Generated Successfully");
+    }
+    
+    function form_individual_woopos()
+    {
+        $rowcount = $this->createSingleGenerator('woopos');
+        display_notification("WooPOS count file generated with $rowcount rows.");
+        $this->call_table('', "WooPOS Count Generated Successfully");
+    }
+
     function write_file_form()
     {
-        if( $this->dolabels)
-            $this->call_table( 'gencat', "Create Catalogue File and Labels" );
-        else
-            $this->call_table( 'gencat', "Create Catalogue File" );
+        // Start form for catalogue generation options
+        start_form(true);
+        start_table(TABLESTYLE2, "width=60%");
+        table_section_title("Generate Catalogue Files");
+        
+        // Description row
+        label_row("Choose your generation option:", "Generate all files at once or individual files:");
+        
+        end_table(1);
+        
+        // Generate All Files section
+        start_table(TABLESTYLE2, "width=60%");
+        table_section_title("Generate All Files");
+        
+        if ($this->dolabels) {
+            label_row("", "This will create all catalogue files and labels");
+            hidden('action', 'gencat');
+            submit_center('gencat', "Create All Catalogue Files and Labels");
+        } else {
+            label_row("", "This will create all catalogue files (Pricebook, Square, WooCommerce, WooPOS)");
+            hidden('action', 'gencat'); 
+            submit_center('gencat', "Create All Catalogue Files");
+        }
+        
+        end_table(1);
+        end_form();
+        
+        // Individual Files section
+        start_form(true);
+        start_table(TABLESTYLE2, "width=60%");
+        table_section_title("Generate Individual Files");
+        
+        $generators = $this->getAvailableGenerators();
+        foreach ($generators as $generator) {
+            $buttonText = "Generate " . $generator['title'];
+            $description = $generator['description'];
+            
+            label_row($generator['title'] . ":", $description);
+            
+            // Create individual form for each generator
+            echo "<tr><td colspan='2' align='center'>";
+            echo "<form method='post'>";
+            echo "<input type='hidden' name='action' value='" . $generator['action'] . "' />";
+            echo "<input type='submit' name='" . $generator['name'] . "_btn' value='$buttonText' class='inputsubmit' />";
+            echo "</form>";
+            echo "</td></tr>";
+        }
+        
+        end_table(1);
+        end_form();
     }
 
     function skulabelsfile_form()

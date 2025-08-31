@@ -17,6 +17,35 @@ class PricebookFile extends LabelsFile
     }
 
     /**
+     * Get generator metadata for dynamic discovery
+     * 
+     * @return array Generator metadata
+     */
+    public static function getGeneratorMetadata()
+    {
+        return [
+            'name' => 'pricebook',
+            'title' => 'Pricebook File',
+            'class' => 'PricebookFile',
+            'description' => 'Generate pricebook CSV file for retail pricing and catalogues',
+            'method' => 'createPricebookFile',
+            'category' => 'catalogue',
+            'version' => '1.0.0',
+            'author' => 'KS Fraser'
+        ];
+    }
+
+    /**
+     * Get the priority/order for this generator
+     * 
+     * @return int Priority order (10 = high priority, displayed first)
+     */
+    public static function getGeneratorPriority()
+    {
+        return 10; // High priority - pricebooks are commonly used
+    }
+
+    /**
      * Create the pricebook CSV file
      * 
      * @return int Number of rows processed
