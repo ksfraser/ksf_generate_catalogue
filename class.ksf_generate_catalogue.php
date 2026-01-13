@@ -127,12 +127,6 @@ class ksf_generate_catalogue extends generic_fa_interface
 		$this->config_values[] = array( 'pref_name' => 'max_rows_file', 'label' => 'Maximum rows per file' );
 		/** Mantis 3228 generate SKU without '*' for thermal printer - add ->thermal_printer var **/
 		$this->config_values[] = array( 'pref_name' => 'thermal_printer', 'label' => ' Are we using a thermal printer (T) or Avery Labels with 3of9(F) (bool)' );
-		
-		// Square-specific preferences
-		$this->config_values[] = array( 'pref_name' => 'online_sale_pricebook_id', 'label' => 'Online Sale Pricebook ID', 'type' => 'sales_types' );
-		$this->config_values[] = array( 'pref_name' => 'use_sale_prices', 'label' => 'Use Sale Prices in Square Export', 'type' => 'yesno_list' );
-		$this->config_values[] = array( 'pref_name' => 'square_export_text', 'label' => 'Square Export Additional Text' );
-		
 //20241102 I haven't designed how I am going to use this field yet!
 		//$this->config_values[] = array( 'pref_name' => 'use_price_change_for_sales', 'label' => 'Use the pricing last changed date for sales date? (T/F)' );
 		$this->dolabels = 0;
