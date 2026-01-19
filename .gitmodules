@@ -1,3 +1,6 @@
 [submodule "FAMock"]
 	path = FAMock
 	url = https://github.com/ksfraser/FAMock.git
+[submodule "Prefs"]
+	path = Prefs
+	url = https://github.com/ksfraser/Prefs.git
