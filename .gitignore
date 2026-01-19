@@ -1,0 +1,34 @@
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# PHPUnit caches
+.phpunit.result.cache
+**/.phpunit.result.cache
+.phpunit.cache/
+**/.phpunit.cache/
+
+# Coverage output
+coverage/
+**/coverage/
+html/
+**/html/
+clover.xml
+*.clover
+junit.xml
+
+# Composer / vendor
+vendor/
+**/vendor/
+
+# Local/module overrides
+prefs_schema.php
+
+# Temp files
+*.zip~
+*.tmp
+*.bak

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuites>
-  <testsuite name="Ksfraser\Frontaccounting\GenCat\Tests\Unit\GeneratorDiscoveryTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\GeneratorDiscoveryTest.php" tests="1" assertions="7" errors="0" warnings="0" failures="0" skipped="0" time="0.077479">
-    <testcase name="testDiscoverGeneratorsFindsExpectedGenerators" class="Ksfraser\Frontaccounting\GenCat\Tests\Unit\GeneratorDiscoveryTest" classname="Ksfraser.Frontaccounting.GenCat.Tests.Unit.GeneratorDiscoveryTest" file="C:\Users\prote\Documents\ksf_generate_catalogue\composer-lib\tests\Unit\GeneratorDiscoveryTest.php" line="79" assertions="7" time="0.077479"/>
-  </testsuite>
-</testsuites>
