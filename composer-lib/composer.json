@@ -11,25 +11,16 @@
     ],
     "repositories": [
         {
-            "type": "path",
-            "url": "../Prefs",
-            "options": {
-                "symlink": true
-            }
+            "type": "vcs",
+            "url": "https://github.com/ksfraser/Prefs.git"
         },
         {
-            "type": "path",
-            "url": "../ModulesDAO",
-            "options": {
-                "symlink": true
-            }
+            "type": "vcs",
+            "url": "https://github.com/ksfraser/ksf_ModulesDAO.git"
         },
         {
-            "type": "path",
-            "url": "../html",
-            "options": {
-                "symlink": true
-            }
+            "type": "vcs",
+            "url": "https://github.com/ksfraser/html.git"
         }
     ],
     "require": {
