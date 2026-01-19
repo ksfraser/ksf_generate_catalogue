@@ -1,0 +1,42 @@
+{
+  "folders": [
+    {
+      "name": "ksf_generate_catalogue",
+      "path": "."
+    },
+    {
+      "name": "Export_Woocommerce",
+      "path": "../Export_Woocommerce"
+    },
+    {
+      "name": "composer-lib",
+      "path": "composer-lib"
+    },
+    {
+      "name": "base-module",
+      "path": "base-module"
+    },
+    {
+      "name": "Prefs (submodule)",
+      "path": "Prefs"
+    },
+    {
+      "name": "ModulesDAO (submodule)",
+      "path": "ModulesDAO"
+    },
+    {
+      "name": "FAMock (submodule)",
+      "path": "FAMock"
+    },
+    {
+      "name": "html",
+      "path": "html"
+    }
+  ],
+  "settings": {
+    "git.autoRepositoryDetection": "subFolders",
+    "files.exclude": {
+      "**/.git": true
+    }
+  }
+}
