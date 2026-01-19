@@ -15,8 +15,6 @@ Thumbs.db
 # Coverage output
 coverage/
 **/coverage/
-html/
-**/html/
 clover.xml
 *.clover
 junit.xml
