@@ -14,7 +14,18 @@ The module now follows a hybrid approach:
 ### Method 1: Using Composer (Recommended)
 
 1. Navigate to your FrontAccounting modules directory
-2. Install the module with composer:
+2. Add GitHub repositories (these packages are not on Packagist):
+   ```json
+   {
+      "repositories": [
+         { "type": "vcs", "url": "https://github.com/ksfraser/Prefs.git" },
+         { "type": "vcs", "url": "https://github.com/ksfraser/ksf_ModulesDAO.git" },
+         { "type": "vcs", "url": "https://github.com/ksfraser/html.git" },
+         { "type": "vcs", "url": "https://github.com/ksfraser/ksf_generate_catalogue.git" }
+      ]
+   }
+   ```
+3. Install the module with composer:
    ```bash
    composer install
    ```

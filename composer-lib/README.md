@@ -208,24 +208,48 @@ For complete documentation see: [DYNAMIC_DISCOVERY_SYSTEM.md](../DYNAMIC_DISCOVE
 
 ## VCS Package Management
 
-All `ksf-*` packages are hosted in VCS repositories. The composer.json includes repository definitions:
+These libraries are not published on Packagist. If you're consuming this library from another project, you must tell Composer where to fetch the `ksfraser/*` packages from.
+
+Important: `repositories` are NOT transitive in Composer. Each consuming project (the “root” `composer.json`) needs its own `repositories` entries.
+
+### GitHub-only setup (copy/paste)
+
+Add this to the consuming project's `composer.json`:
 
 ```json
 {
     "repositories": [
-        {
-            "type": "vcs",
-            "url": "https://github.com/ksfraser/frontaccounting-common"
-        },
-        {
-            "type": "vcs", 
-            "url": "https://github.com/ksfraser/ksf-file"
-        }
+        { "type": "vcs", "url": "https://github.com/ksfraser/Prefs.git" },
+        { "type": "vcs", "url": "https://github.com/ksfraser/ksf_ModulesDAO.git" },
+        { "type": "vcs", "url": "https://github.com/ksfraser/html.git" }
     ]
 }
 ```
 
-These packages are marked as "suggest" rather than "require" to allow the library to work independently when needed.
+Then require the packages normally:
+
+```bash
+composer require ksfraser/frontaccounting-gencat
+```
+
+### Local development mode (optional)
+
+When developing across multiple repos locally, prefer `path` repositories in the *root* project (before the `vcs` entries):
+
+```json
+{
+    "repositories": [
+        { "type": "path", "url": "../Prefs", "options": { "symlink": true } },
+        { "type": "path", "url": "../ModulesDAO", "options": { "symlink": true } },
+        { "type": "path", "url": "../html", "options": { "symlink": true } },
+        { "type": "vcs", "url": "https://github.com/ksfraser/Prefs.git" },
+        { "type": "vcs", "url": "https://github.com/ksfraser/ksf_ModulesDAO.git" },
+        { "type": "vcs", "url": "https://github.com/ksfraser/html.git" }
+    ]
+}
+```
+
+This allows you to work on the libraries in-place locally, while still having a clean “GitHub-only” path for deployments.
 
 ## PHP 7.3 Compatibility
 
