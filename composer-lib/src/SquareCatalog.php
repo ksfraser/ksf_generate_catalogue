@@ -8,8 +8,9 @@ use Exception;
  * Square Catalog Generator
  * 
  * Generates CSV files for importing products into Square
+ * Implements OutputHandlerInterface for plugin-based architecture
  */
-class SquareCatalog extends PricebookFile
+class SquareCatalog extends PricebookFile implements OutputHandlerInterface
 {
     public function __construct($prefs_tablename)
     {
@@ -51,16 +52,28 @@ class SquareCatalog extends PricebookFile
      */
     public function getConfiguration()
     {
+        return $this->getConfigurationSchema();
+    }
+
+    /**
+     * Get configuration schema for this output handler
+     * 
+     * @return array Configuration schema
+     */
+    public function getConfigurationSchema()
+    {
         return [
             'online_sale_pricebook_id' => [
                 'label' => 'Online Sale Pricebook',
                 'type' => 'pricebook_selector',
-                'description' => 'Select the pricebook to use for online sale prices'
+                'description' => 'Select the pricebook to use for online sale prices',
+                'default' => 2
             ],
             'use_sale_prices' => [
                 'label' => 'Use Sale Prices',
                 'type' => 'yes_no',
-                'description' => 'Include sale prices in the export'
+                'description' => 'Include sale prices in the export',
+                'default' => true
             ],
             'square_export_text' => [
                 'label' => 'Additional Export Text',
@@ -77,6 +90,16 @@ class SquareCatalog extends PricebookFile
      */
     public static function getGeneratorMetadata()
     {
+        return self::getOutputHandlerMetadata();
+    }
+
+    /**
+     * Get output handler metadata for dynamic discovery
+     * 
+     * @return array Handler metadata
+     */
+    public static function getOutputHandlerMetadata()
+    {
         return [
             'name' => 'square',
             'title' => 'Square Catalog',
@@ -84,19 +107,104 @@ class SquareCatalog extends PricebookFile
             'description' => 'Generate Square catalog import CSV file for POS integration',
             'method' => 'createSquareCatalog',
             'category' => 'pos',
+            'output_type' => 'csv',
             'version' => '1.0.0',
-            'author' => 'KS Fraser'
+            'author' => 'KS Fraser',
+            'requires_config' => true
         ];
     }
 
     /**
      * Get the priority/order for this generator
      * 
-     * @return int Priority order (20 = medium priority)
+     * @return int Priority order (25 = medium priority)
      */
     public static function getGeneratorPriority()
     {
-        return 25; // Medium priority
+        return 25;
+    }
+
+    /**
+     * Get the priority/order for this output handler
+     * 
+     * @return int Priority order (25 = medium priority)
+     */
+    public static function getOutputHandlerPriority()
+    {
+        return 25;
+    }
+
+    /**
+     * Check if this output handler is available
+     * 
+     * @return bool True if handler is available
+     */
+    public static function isOutputHandlerAvailable()
+    {
+        return true;
+    }
+
+    /**
+     * Generate the output file(s)
+     * 
+     * @return array Result information
+     */
+    public function generateOutput()
+    {
+        try {
+            $rowcount = $this->createFile();
+            
+            return [
+                'success' => true,
+                'rows' => $rowcount,
+                'files' => [$this->filename],
+                'message' => "Successfully generated Square catalog with {$rowcount} products"
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'rows' => 0,
+                'files' => [],
+                'message' => 'Error: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Validate that all required configuration is present and valid
+     * 
+     * @return array Validation result
+     */
+    public function validateConfiguration()
+    {
+        $errors = [];
+        
+        // Check that database connection exists
+        if (!$this->getDatabase()) {
+            $errors[] = 'Database connection not available';
+        }
+        
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Get a human-readable status message about this handler's readiness
+     * 
+     * @return string Status message
+     */
+    public function getStatus()
+    {
+        $validation = $this->validateConfiguration();
+        
+        if (!$validation['valid']) {
+            return 'Not ready: ' . implode(', ', $validation['errors']);
+        }
+        
+        return 'Ready to generate Square catalog';
     }
 
     /**

@@ -6,8 +6,9 @@ namespace Ksfraser\Frontaccounting\GenCat;
  * WooCommerce Import File Generator
  * 
  * Generates CSV files for importing products into WooCommerce
+ * Implements OutputHandlerInterface for plugin-based architecture
  */
-class WoocommerceImport extends BaseCatalogueGenerator
+class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerInterface
 {
     public function __construct($prefs_tablename)
     {
@@ -27,6 +28,16 @@ class WoocommerceImport extends BaseCatalogueGenerator
      */
     public static function getGeneratorMetadata()
     {
+        return self::getOutputHandlerMetadata();
+    }
+
+    /**
+     * Get output handler metadata for dynamic discovery
+     * 
+     * @return array Handler metadata
+     */
+    public static function getOutputHandlerMetadata()
+    {
         return [
             'name' => 'woocommerce',
             'title' => 'WooCommerce Import',
@@ -34,8 +45,10 @@ class WoocommerceImport extends BaseCatalogueGenerator
             'description' => 'Generate WooCommerce product import CSV file',
             'method' => 'createWoocommerceImport',
             'category' => 'ecommerce',
+            'output_type' => 'csv',
             'version' => '1.0.0',
-            'author' => 'KS Fraser'
+            'author' => 'KS Fraser',
+            'requires_config' => false
         ];
     }
 
@@ -46,7 +59,121 @@ class WoocommerceImport extends BaseCatalogueGenerator
      */
     public static function getGeneratorPriority()
     {
-        return 20; // Medium priority
+        return 20;
+    }
+
+    /**
+     * Get the priority/order for this output handler
+     * 
+     * @return int Priority order (20 = medium priority)
+     */
+    public static function getOutputHandlerPriority()
+    {
+        return 20;
+    }
+
+    /**
+     * Check if this output handler is available
+     * 
+     * @return bool True if handler is available
+     */
+    public static function isOutputHandlerAvailable()
+    {
+        return true;
+    }
+
+    /**
+     * Generate the output file(s)
+     * 
+     * @return array Result information
+     */
+    public function generateOutput()
+    {
+        try {
+            $rowcount = $this->createFile();
+            
+            return [
+                'success' => true,
+                'rows' => $rowcount,
+                'files' => [$this->getFullFilename()],
+                'message' => "Successfully generated WooCommerce import with {$rowcount} products"
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'rows' => 0,
+                'files' => [],
+                'message' => 'Error: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get configuration schema for this output handler
+     * 
+     * @return array Configuration schema
+     */
+    public function getConfigurationSchema()
+    {
+        return [
+            'sort_by' => [
+                'label' => 'Sort By',
+                'type' => 'select',
+                'description' => 'Sort products by price or stock updates',
+                'default' => 'price',
+                'options' => [
+                    'price' => 'Price Updates',
+                    'stock' => 'Stock Updates'
+                ]
+            ]
+        ];
+    }
+
+    /**
+     * Validate that all required configuration is present and valid
+     * 
+     * @return array Validation result
+     */
+    public function validateConfiguration()
+    {
+        $errors = [];
+        
+        if (!$this->getDatabase()) {
+            $errors[] = 'Database connection not available';
+        }
+        
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Get a human-readable status message about this handler's readiness
+     * 
+     * @return string Status message
+     */
+    public function getStatus()
+    {
+        $validation = $this->validateConfiguration();
+        
+        if (!$validation['valid']) {
+            return 'Not ready: ' . implode(', ', $validation['errors']);
+        }
+        
+        return 'Ready to generate WooCommerce import';
+    }
+
+    /**
+     * Get the full filename with path
+     * 
+     * @return string Full file path
+     */
+    protected function getFullFilename()
+    {
+        $count = $this->file_count > 0 ? "_{$this->file_count}" : '';
+        return "{$this->file_base}{$count}.{$this->file_ext}";
     }
 
     /**

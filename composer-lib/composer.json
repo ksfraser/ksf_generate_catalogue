@@ -11,16 +11,32 @@
     ],
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://github.com/ksfraser/frontaccounting-common"
+            "type": "path",
+            "url": "../Prefs",
+            "options": {
+                "symlink": true
+            }
         },
         {
-            "type": "vcs", 
-            "url": "https://github.com/ksfraser/ksf-file"
+            "type": "path",
+            "url": "../ModulesDAO",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "../html",
+            "options": {
+                "symlink": true
+            }
         }
     ],
     "require": {
-        "php": "^7.3|^8.0"
+        "php": "^7.3|^8.0",
+        "ksfraser/prefs": "^0.1",
+        "ksfraser/ksf-modules-dao": "^0.1",
+        "ksfraser/html": "^1.0"
     },
     "suggest": {
         "ksfraser/frontaccounting-common": "Common FrontAccounting utilities and base classes",
@@ -48,6 +64,9 @@
         "phpcs": "phpcs --standard=PSR12 src tests"
     },
     "config": {
+        "github-protocols": [
+            "https"
+        ],
         "allow-plugins": {
             "composer/package-versions-deprecated": true
         }

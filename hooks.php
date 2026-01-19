@@ -42,6 +42,8 @@ class hooks_ksf_generate_catalogue extends hooks {
                                         $path_to_root.'/modules/ksf_items/stock_photos.php', 'SA_ksf_generate_catalogue');
                                 $app->add_lapp_function(2, _('Manage Shipping Dimensions for Items'),
                                         $path_to_root.'/modules/ksf_items/shipping_dimensions.php', 'SA_ksf_generate_catalogue');
+				$app->add_lapp_function(2, _('Gen Catalogue Prefs Store (Sync/Switch)'),
+					$path_to_root.'/modules/ksf_generate_catalogue/prefs_admin.php', 'SA_ksf_generate_catalogue');
 
 		}
 	}

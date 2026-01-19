@@ -92,6 +92,34 @@ class CatalogueGeneratorFactory
     }
 
     /**
+     * Create an Amazon import generator
+     *
+     * @param array $config Configuration array
+     * @return AmazonImport
+     */
+    public function createAmazonImport($config = [])
+    {
+        $generator = new AmazonImport($this->prefs_tablename);
+        $generator->setDatabase($this->database);
+        $this->applyConfig($generator, $config);
+        return $generator;
+    }
+
+    /**
+     * Create a Phomemo thermal printer labels generator
+     *
+     * @param array $config Configuration array
+     * @return PhomemoPrinterOutput
+     */
+    public function createPhomemoPrinterOutput($config = [])
+    {
+        $generator = new PhomemoPrinterOutput($this->prefs_tablename);
+        $generator->setDatabase($this->database);
+        $this->applyConfig($generator, $config);
+        return $generator;
+    }
+
+    /**
      * Get list of available generators using dynamic discovery
      * 
      * @param bool $forceRefresh Force refresh of discovered generators

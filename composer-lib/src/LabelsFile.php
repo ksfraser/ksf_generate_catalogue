@@ -6,8 +6,9 @@ namespace Ksfraser\Frontaccounting\GenCat;
  * Labels File Generator
  * 
  * Generates CSV files for printing product labels
+ * Implements OutputHandlerInterface for plugin-based architecture
  */
-class LabelsFile extends BaseCatalogueGenerator
+class LabelsFile extends BaseCatalogueGenerator implements OutputHandlerInterface
 {
     protected $last_delivery_no;
 
@@ -27,6 +28,16 @@ class LabelsFile extends BaseCatalogueGenerator
      */
     public static function getGeneratorMetadata()
     {
+        return self::getOutputHandlerMetadata();
+    }
+
+    /**
+     * Get output handler metadata for dynamic discovery
+     * 
+     * @return array Handler metadata
+     */
+    public static function getOutputHandlerMetadata()
+    {
         return [
             'name' => 'labels',
             'title' => 'Labels File',
@@ -34,8 +45,10 @@ class LabelsFile extends BaseCatalogueGenerator
             'description' => 'Generate product labels CSV file for printing',
             'method' => 'createLabelsFile',
             'category' => 'printing',
+            'output_type' => 'csv',
             'version' => '1.0.0',
-            'author' => 'KS Fraser'
+            'author' => 'KS Fraser',
+            'requires_config' => false
         ];
     }
 
@@ -46,7 +59,106 @@ class LabelsFile extends BaseCatalogueGenerator
      */
     public static function getGeneratorPriority()
     {
-        return 50; // Lower priority - usually used separately from catalogue generation
+        return 50;
+    }
+
+    /**
+     * Get the priority/order for this output handler
+     * 
+     * @return int Priority order (50 = lower priority)
+     */
+    public static function getOutputHandlerPriority()
+    {
+        return 50;
+    }
+
+    /**
+     * Check if this output handler is available
+     * 
+     * @return bool True if handler is available
+     */
+    public static function isOutputHandlerAvailable()
+    {
+        return true;
+    }
+
+    /**
+     * Generate the output file(s)
+     * 
+     * @return array Result information
+     */
+    public function generateOutput()
+    {
+        try {
+            $rowcount = $this->createFile();
+            
+            return [
+                'success' => true,
+                'rows' => $rowcount,
+                'files' => [$this->filename],
+                'message' => "Successfully generated {$rowcount} labels"
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'rows' => 0,
+                'files' => [],
+                'message' => 'Error: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get configuration schema for this output handler
+     * 
+     * @return array Configuration schema
+     */
+    public function getConfigurationSchema()
+    {
+        return [
+            'thermal_printer' => [
+                'label' => 'Use Thermal Printer Format',
+                'type' => 'yes_no',
+                'description' => 'Format labels for thermal printer',
+                'default' => false
+            ]
+        ];
+    }
+
+    /**
+     * Validate that all required configuration is present and valid
+     * 
+     * @return array Validation result
+     */
+    public function validateConfiguration()
+    {
+        $errors = [];
+        
+        if (!$this->getDatabase()) {
+            $errors[] = 'Database connection not available';
+        }
+        
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors
+        ];
+    }
+
+    /**
+     * Get a human-readable status message about this handler's readiness
+     * 
+     * @return string Status message
+     */
+    public function getStatus()
+    {
+        $validation = $this->validateConfiguration();
+        
+        if (!$validation['valid']) {
+            return 'Not ready: ' . implode(', ', $validation['errors']);
+        }
+        
+        return 'Ready to generate labels';
     }
 
     /**

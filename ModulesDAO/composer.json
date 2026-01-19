@@ -1,0 +1,30 @@
+{
+  "name": "ksfraser/ksf-modules-dao",
+  "version": "0.1.0",
+  "description": "Cross-platform DAO abstraction (DB, WordPress, SuiteCRM, FrontAccounting, CSV, XML)",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "KS Fraser"
+    }
+  ],
+  "require": {
+    "php": ">=7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Ksfraser\\ModulesDAO\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Ksfraser\\ModulesDAO\\Tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0"
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
