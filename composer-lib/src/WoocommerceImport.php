@@ -10,6 +10,15 @@ namespace Ksfraser\Frontaccounting\GenCat;
  */
 class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerInterface
 {
+    /**
+     * Mapping table used (optionally) to describe WooCommerce variable/variation relationships.
+     *
+     * If present, it is expected to contain at least:
+     * - parent_stock_id
+     * - child_stock_id
+     */
+    private const WOO_RELATION_TABLE = 'woocommerce_parent_child';
+
     public function __construct($prefs_tablename)
     {
         parent::__construct($prefs_tablename);
@@ -18,7 +27,36 @@ class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerI
         $this->file_ext = "csv";
         $this->setFileName();
 
-        $this->hline = '"ID", "SKU", "Name", "Published", "Is Featured?", "Visibility in catalog", "Short Description", "Description", "Regular price", "Sale price", "Date sale price starts", "Date sale price ends", "Tax status", "Tax class", "In Stock?", "Stock", "Backorders", "Low stock amount", "Sold individually?", "Categories", "Tags", "Shipping class", "Allow customer reviews?", "Sync with Square", "Last Price Change", "Last Detail Change", "Sale Price Last Updated"';
+        // Note: WooCommerce CSV import uses header names for mapping; ordering is not critical.
+        // We include Type + Parent so variable/variation relationships can be imported.
+        $this->hline = '"ID", "Type", "Parent", "SKU", "Name", "Published", "Is Featured?", "Visibility in catalog", "Short Description", "Description", "Regular price", "Sale price", "Date sale price starts", "Date sale price ends", "Tax status", "Tax class", "In Stock?", "Stock", "Backorders", "Low stock amount", "Sold individually?", "Categories", "Tags", "Shipping class", "Allow customer reviews?", "Sync with Square", "Last Price Change", "Last Detail Change", "Sale Price Last Updated"';
+    }
+
+    /**
+     * Escape a string for use in a SQL literal.
+     */
+    protected function sqlEscape(string $value): string
+    {
+        if (function_exists('db_escape')) {
+            return db_escape($value);
+        }
+        return addslashes($value);
+    }
+
+    /**
+     * Check whether the Woo relationship table exists.
+     */
+    protected function hasWooRelationshipTable(): bool
+    {
+        try {
+            $db = $this->getDatabase();
+            $table = $db->getTablePrefix() . self::WOO_RELATION_TABLE;
+            $sql = "SHOW TABLES LIKE '" . $this->sqlEscape($table) . "'";
+            $res = $db->query($sql, 'Failed checking Woo relationship table');
+            return $db->fetch($res) !== false;
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     /**
@@ -181,8 +219,15 @@ class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerI
      */
     public function setQuery()
     {
+        $hasRelations = $this->hasWooRelationshipTable();
+        $prefix = $this->getDatabase()->getTablePrefix();
+        $relTable = $prefix . self::WOO_RELATION_TABLE;
+
         $this->query = "select 
                     t.woocommerce_id as ID, 
+                    " . ($hasRelations
+                        ? "CASE WHEN wpc.child_stock_id IS NOT NULL THEN 'variation' WHEN wpp.parent_stock_id IS NOT NULL THEN 'variable' ELSE 'simple' END as type,\n                    IFNULL(wpc.parent_stock_id, '') as parent,"
+                        : "'simple' as type,\n                    '' as parent,") . "
                     " . TB_PREF . "stock_master.stock_id as SKU, 
                     a.description as Name, 
                     if( a.inactive, '0', '1') as published,
@@ -286,6 +331,12 @@ class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerI
                         r.stock_id=s.stock_id 
                     ) as a
                 ON a.stock_id = " . TB_PREF . "stock_master.stock_id ";
+
+        if ($hasRelations) {
+            // Variation rows: child_stock_id -> parent_stock_id
+            // Variable rows: any stock_id present as a parent_stock_id
+            $this->query .= "\n                LEFT JOIN (\n                    SELECT parent_stock_id, child_stock_id\n                    FROM {$relTable}\n                ) as wpc ON wpc.child_stock_id = " . TB_PREF . "stock_master.stock_id\n                LEFT JOIN (\n                    SELECT DISTINCT parent_stock_id\n                    FROM {$relTable}\n                ) as wpp ON wpp.parent_stock_id = " . TB_PREF . "stock_master.stock_id\n            ";
+        }
                 
         if (strncasecmp($this->sort_by, "stock", 5) === 0) {
             $this->query .= "	order by a.last_updated DESC, p.last_updated DESC ";
@@ -454,6 +505,8 @@ class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerI
     {
         $this->write_file->write_array_to_csv([
             $row["ID"],
+            $row['type'] ?? 'simple',
+            $row['parent'] ?? '',
             $row["SKU"],
             $row['Name'],  
             $row['published'],

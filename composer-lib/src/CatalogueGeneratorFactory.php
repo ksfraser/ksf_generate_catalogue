@@ -120,6 +120,34 @@ class CatalogueGeneratorFactory
     }
 
     /**
+     * Create a WooCommerce stock/price export generator
+     *
+     * @param array $config Configuration array
+     * @return WoocommerceStockPriceExport
+     */
+    public function createWoocommerceStockPriceExport($config = [])
+    {
+        $generator = new WoocommerceStockPriceExport($this->prefs_tablename);
+        $generator->setDatabase($this->database);
+        $this->applyConfig($generator, $config);
+        return $generator;
+    }
+
+    /**
+     * Create a Square stock/price export generator
+     *
+     * @param array $config Configuration array
+     * @return SquareStockPriceExport
+     */
+    public function createSquareStockPriceExport($config = [])
+    {
+        $generator = new SquareStockPriceExport($this->prefs_tablename);
+        $generator->setDatabase($this->database);
+        $this->applyConfig($generator, $config);
+        return $generator;
+    }
+
+    /**
      * Get list of available generators using dynamic discovery
      * 
      * @param bool $forceRefresh Force refresh of discovered generators

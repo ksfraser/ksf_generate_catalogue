@@ -17,6 +17,7 @@ use PHPUnit\Framework\TestCase;
 use Ksfraser\Frontaccounting\GenCat\GeneratorDiscovery;
 use Ksfraser\Frontaccounting\GenCat\CatalogueGeneratorFactory;
 use Ksfraser\Frontaccounting\GenCat\DatabaseInterface;
+use Ksfraser\Frontaccounting\GenCat\WoocommerceImport;
 
 /**
  * Test class for GeneratorDiscovery functionality
@@ -136,6 +137,18 @@ class GeneratorDiscoveryTest extends TestCase
             $this->assertNotEmpty($generator['title'], 'Generator title should not be empty');
             $this->assertNotEmpty($generator['method'], 'Generator method should not be empty');
         }
+    }
+
+    public function testWooCommerceImportHeaderIncludesTypeAndParent()
+    {
+        $gen = new WoocommerceImport('test_prefs_table');
+        $ref = new \ReflectionClass($gen);
+        $prop = $ref->getProperty('hline');
+        $prop->setAccessible(true);
+
+        $hline = (string)$prop->getValue($gen);
+        $this->assertStringContainsString('"Type"', $hline);
+        $this->assertStringContainsString('"Parent"', $hline);
     }
 
     /**

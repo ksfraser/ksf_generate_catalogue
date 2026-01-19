@@ -66,6 +66,24 @@ CREATE TABLE IF NOT EXISTS `0_square_import_log` (
 -- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================
+-- 4b. WooCommerce Parent/Child Relationship Table
+--
+-- Used to model WooCommerce variable products (parents) and variations (children)
+-- by linking FrontAccounting stock_id values.
+-- =====================================================
+CREATE TABLE IF NOT EXISTS `0_woocommerce_parent_child` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `parent_stock_id` varchar(20) NOT NULL,
+  `child_stock_id` varchar(20) NOT NULL,
+  `last_created` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_updated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_parent_child` (`parent_stock_id`, `child_stock_id`),
+  KEY `idx_parent_stock_id` (`parent_stock_id`),
+  KEY `idx_child_stock_id` (`child_stock_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================
 -- 5. Add new configuration fields to existing prefs
 -- Note: This assumes your preferences table structure
 -- Adjust table name as needed for your specific setup
