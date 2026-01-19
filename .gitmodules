@@ -1,0 +1,3 @@
+[submodule "FAMock"]
+	path = FAMock
+	url = https://github.com/ksfraser/FAMock.git
