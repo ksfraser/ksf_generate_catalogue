@@ -4,3 +4,6 @@
 [submodule "Prefs"]
 	path = Prefs
 	url = https://github.com/ksfraser/Prefs.git
+[submodule "ModulesDAO"]
+	path = ModulesDAO
+	url = https://github.com/ksfraser/ksf_ModulesDAO.git
