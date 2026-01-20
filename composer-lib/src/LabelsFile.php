@@ -99,7 +99,7 @@ class LabelsFile extends BaseCatalogueGenerator implements OutputHandlerInterfac
                 'message' => "Successfully generated {$rowcount} labels"
             ];
             
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [
                 'success' => false,
                 'rows' => 0,
@@ -171,10 +171,11 @@ class LabelsFile extends BaseCatalogueGenerator implements OutputHandlerInterfac
         $this->prepWriteFile();
         $this->write_file->write_line($this->hline);
 
-        $result = db_query($this->query, "Couldn't grab inventory to export labels");
+        $db = $this->getDatabase();
+        $result = $db->query($this->query, "Couldn't grab inventory to export labels");
 
         $rowcount = 0;
-        while ($row = db_fetch($result)) {
+        while ($row = $db->fetch($result)) {
             $num = $row['instock'];
             // If we have 6 items instock, we need 6 labels to print so we can put on product
             for ($num; $num > 0; $num--) {
@@ -213,10 +214,11 @@ class LabelsFile extends BaseCatalogueGenerator implements OutputHandlerInterfac
         }
 
         $this->setPOQuery();
-        $result = db_query($this->query, "Couldn't grab purchase order items for labels");
+        $db = $this->getDatabase();
+        $result = $db->query($this->query, "Couldn't grab purchase order items for labels");
 
         $rowcount = 0;
-        while ($row = db_fetch($result)) {
+        while ($row = $db->fetch($result)) {
             $quantity = $row['quantity_ordered'];
             for ($i = 0; $i < $quantity; $i++) {
                 $this->writeSkuLabelsLine(
@@ -256,10 +258,11 @@ class LabelsFile extends BaseCatalogueGenerator implements OutputHandlerInterfac
         }
 
         $this->setSingleSkuQuery();
-        $result = db_query($this->query, "Couldn't grab stock item for labels");
+        $db = $this->getDatabase();
+        $result = $db->query($this->query, "Couldn't grab stock item for labels");
 
         $rowcount = 0;
-        if ($row = db_fetch($result)) {
+        if ($row = $db->fetch($result)) {
             // Generate just one label for the specified SKU
             $this->writeSkuLabelsLine(
                 $row['stock_id'], 

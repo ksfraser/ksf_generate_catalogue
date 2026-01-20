@@ -507,6 +507,21 @@ abstract class BaseCatalogueGenerator implements GeneratorMetadataInterface
     }
 
     /**
+     * Inject a file writer implementation.
+     *
+     * This is primarily intended for testing (e.g., in-memory writers) so we can
+     * run generators without relying on external FrontAccounting modules.
+     *
+     * @param object $writer Writer instance implementing write_line(), write_array_to_csv(), close()
+     * @return void
+     * @since 1.0.0
+     */
+    public function setWriteFile($writer)
+    {
+        $this->write_file = $writer;
+    }
+
+    /**
      * Get the database interface, creating a default one if not set
      * 
      * @return DatabaseInterface Database interface instance
@@ -555,6 +570,11 @@ abstract class BaseCatalogueGenerator implements GeneratorMetadataInterface
      */
     public function prepWriteFile()
     {
+        // Allow tests to inject a writer and bypass filesystem dependencies.
+        if (is_object($this->write_file)) {
+            return;
+        }
+
         if (!isset($this->tmp_dir) || strlen($this->tmp_dir) < 3) {
             throw new Exception("Tmp dir not set");
         }
@@ -567,7 +587,7 @@ abstract class BaseCatalogueGenerator implements GeneratorMetadataInterface
             // This will need to be refactored when the ksf-file library is created
             require_once('../ksf_modules_common/class.write_file.php');
             $this->write_file = new \write_file($this->tmp_dir, $this->filename);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             throw $e;
         }
     }
@@ -605,7 +625,7 @@ abstract class BaseCatalogueGenerator implements GeneratorMetadataInterface
                     display_notification("Email sent to {$this->mailto}.");
                 }
                 return true;
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 if (function_exists('display_notification')) {
                     display_notification("Email failed: " . $e->getMessage());
                 }

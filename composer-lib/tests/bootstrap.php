@@ -9,6 +9,9 @@
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+// Load FrontAccounting mock stubs/helpers from the FAMock submodule.
+require_once __DIR__ . '/../../FAMock/php/MockDatabase.php';
+
 // Define test constants
 if (!defined('TB_PREF')) {
     define('TB_PREF', '0_');

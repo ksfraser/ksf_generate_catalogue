@@ -137,7 +137,7 @@ class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerI
                 'message' => "Successfully generated WooCommerce import with {$rowcount} products"
             ];
             
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             return [
                 'success' => false,
                 'rows' => 0,
@@ -356,10 +356,11 @@ class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerI
         $this->prepWriteFile();
         $this->write_file->write_line($this->hline);
 
-        $result = db_query($this->query, "Couldn't grab inventory to export to WooCommerce");
+        $db = $this->getDatabase();
+        $result = $db->query($this->query, "Couldn't grab inventory to export to WooCommerce");
 
         $rowcount = 0;
-        while ($row = db_fetch($result)) {
+        while ($row = $db->fetch($result)) {
             $this->processProductRow($row);
             $this->writeProductRow($row);
             $rowcount++;

@@ -55,10 +55,11 @@ class PricebookFile extends LabelsFile
         $this->prepWriteFile();
         $this->write_file->write_line($this->hline);
 
-        $result = db_query($this->query, "Couldn't grab inventory to export pricebook");
+        $db = $this->getDatabase();
+        $result = $db->query($this->query, "Couldn't grab inventory to export pricebook");
         
         $rowcount = 0;
-        while ($row = db_fetch($result)) {
+        while ($row = $db->fetch($result)) {
             // For pricebooks, we typically want to show the catalogue format
             // Hardcoding false for thermal printer as pricebooks are more like printed catalogues
             $this->writeSkuLabelsLine(
