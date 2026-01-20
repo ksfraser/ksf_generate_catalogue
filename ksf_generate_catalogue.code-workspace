@@ -9,6 +9,54 @@
       "path": "../Export_Woocommerce"
     },
     {
+      "name": "Exceptions",
+      "path": "../Exceptions"
+    },
+    {
+      "name": "event",
+      "path": "../event"
+    },
+    {
+      "name": "eventloop",
+      "path": "../eventloop"
+    },
+    {
+      "name": "FILE",
+      "path": "../FILE"
+    },
+    {
+      "name": "kflog",
+      "path": "../kflog"
+    },
+    {
+      "name": "ksf_common",
+      "path": "../ksf_common"
+    },
+    {
+      "name": "ksf_PrefCache",
+      "path": "../ksf_PrefCache"
+    },
+    {
+      "name": "ksf_settings",
+      "path": "../ksf_settings"
+    },
+    {
+      "name": "ksf-file",
+      "path": "../ksf-file"
+    },
+    {
+      "name": "ksf-settings",
+      "path": "../ksf-settings"
+    },
+    {
+      "name": "origin",
+      "path": "../origin"
+    },
+    {
+      "name": "plugin",
+      "path": "../plugin"
+    },
+    {
       "name": "composer-lib",
       "path": "composer-lib"
     },
