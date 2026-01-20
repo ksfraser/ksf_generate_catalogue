@@ -6,6 +6,9 @@
     },
     {
       "name": "Export_Woocommerce",
+    {
+      "path": "../FA_ProductAttributes"
+    },
       "path": "../Export_Woocommerce"
     },
     {
