@@ -19,7 +19,7 @@ class SquareCatalog extends PricebookFile implements OutputHandlerInterface
         // Updated header format to match Square's new requirements (August 2025)
         // Double quotes are REQUIRED - they ensure proper CSV parsing when field names contain spaces, 
         // special characters, or when importing into Square's system
-        $this->hline = '"Token","Item Name","Variation Name","SKU","Description","Categories","Reporting Category","SEO Title","SEO Description","Permalink","GTIN","Square Online Item Visibility","Item Type","Weight (kg)","Social Media Link Title","Social Media Link Description","Shipping Enabled","Self-serve Ordering Enabled","Delivery Enabled","Pickup Enabled","Price","Online Sale Price","Archived","Sellable","Contains Alcohol","Stockable","Skip Detail Screen in POS","Option Name 1","Option Value 1","Enabled Fraser Highland Shoppe","Current Quantity Fraser Highland Shoppe","New Quantity Fraser Highland Shoppe","Stock Alert Enabled Fraser Highland Shoppe","Stock Alert Count Fraser Highland Shoppe","Price Fraser Highland Shoppe","Enabled KSF","Current Quantity KSF","New Quantity KSF","Stock Alert Enabled KSF","Stock Alert Count KSF","Price KSF","Tax - Future (5%)","Tax - GST (5%)"';
+        $this->hline = '"Token","Item Name","Customer-facing Name","Variation Name","SKU","Description","Categories","Reporting Category","SEO Title","SEO Description","Permalink","GTIN","Square Online Item Visibility","Item Type","Weight (kg)","Social Media Link Title","Social Media Link Description","Shipping Enabled","Self-serve Ordering Enabled","Delivery Enabled","Pickup Enabled","Price","Online Sale Price","Archived","Sellable","Contains Alcohol","Stockable","Skip Detail Screen in POS","Option Name 1","Option Value 1","Option Name 2","Option Value 2","Enabled Fraser Highland Shoppe","Current Quantity Fraser Highland Shoppe","New Quantity Fraser Highland Shoppe","Stock Alert Enabled Fraser Highland Shoppe","Stock Alert Count Fraser Highland Shoppe","Price Fraser Highland Shoppe","Enabled KSF","Current Quantity KSF","New Quantity KSF","Stock Alert Enabled KSF","Stock Alert Count KSF","Price KSF","Tax - Future (5%)","Tax - GST (5%)"';
     }
 
     /**
@@ -226,8 +226,8 @@ class SquareCatalog extends PricebookFile implements OutputHandlerInterface
                     '' as seo_description, 
                     '' as permalink,
                     '' as gtin,
-                    IF(a.inactive, 'N', 'Y') as square_online_item_visibility,
-                    'Physical' as item_type,
+                    IF(a.inactive, 'hidden', 'visible') as square_online_item_visibility,
+                    'Physical good' as item_type,
                     '0.00' as weight_kg,
                     IFNULL(sm.social_media_title, '') as social_media_link_title,
                     IFNULL(sm.social_media_description, '') as social_media_link_description,
@@ -380,6 +380,14 @@ class SquareCatalog extends PricebookFile implements OutputHandlerInterface
         // Set default quantities if null
         $row['hg_qty'] = $row['hg_qty'] ?? '0';
         $row['hold_qty'] = $row['hold_qty'] ?? '0';
+
+        // Stock alert configuration (Square expects Y/N + a numeric count)
+        $lowstock = isset($row['lowstock']) ? (int)$row['lowstock'] : 0;
+        $row['hg_stock_alert_enabled'] = ($lowstock > 0) ? 'Y' : 'N';
+        $row['hg_stock_alert_count'] = ($lowstock > 0) ? (string)$lowstock : '';
+
+        // Location-specific price: prefer registered (sales_type_id=3) when available
+        $row['registered'] = !empty($row['registered']) ? number_format((float)$row['registered'], 2, '.', '') : '';
     }
 
     /**
@@ -389,10 +397,18 @@ class SquareCatalog extends PricebookFile implements OutputHandlerInterface
      */
     protected function writeSquareRow($row)
     {
+        $price = $row['price'] ?? '0.00';
+        $onlineSalePrice = $row['online_sale_price'] ?? $price;
+
+        $hgPrice = !empty($row['registered']) ? $row['registered'] : $price;
+        $hgQty = $row['hg_qty'] ?? '0';
+        $ksfQty = $row['hold_qty'] ?? '0';
+
         $this->write_file->write_array_to_csv([
             $row['token'] ?? '',                                    // Token
             $row['item_name'] ?? '',                               // Item Name
-            'Regular',                                             // Variation Name
+            $row['item_name'] ?? '',                               // Customer-facing Name
+            '',                                                    // Variation Name //WAS Regular
             $row['stock_id'] ?? '',                                // SKU
             $row['description'] ?? '',                             // Description
             $row['categories'] ?? '',                              // Categories
@@ -401,8 +417,8 @@ class SquareCatalog extends PricebookFile implements OutputHandlerInterface
             $row['seo_description'] ?? '',                         // SEO Description
             $row['permalink'] ?? '',                               // Permalink
             $row['gtin'] ?? '',                                    // GTIN
-            $row['square_online_item_visibility'] ?? 'Y',          // Square Online Item Visibility
-            $row['item_type'] ?? 'Physical',                       // Item Type
+            $row['square_online_item_visibility'] ?? 'visible',    // Square Online Item Visibility    WAS Y
+            $row['item_type'] ?? 'Physical good',                  // Item Type                         Was Physical
             $row['weight_kg'] ?? '0.00',                           // Weight (kg)
             $row['social_media_link_title'] ?? '',                 // Social Media Link Title
             $row['social_media_link_description'] ?? '',           // Social Media Link Description
@@ -419,6 +435,8 @@ class SquareCatalog extends PricebookFile implements OutputHandlerInterface
             $row['skip_detail_screen_in_pos'] ?? 'N',              // Skip Detail Screen in POS
             $row['option_name_1'] ?? '',                           // Option Name 1 (future use)
             $row['option_value_1'] ?? '',                          // Option Value 1 (future use)
+            '',                                                    // Option Name 2 (future use)
+            '',                                                    // Option Value 2 (future use)
             $row['enabled_hg'] ?? 'Y',                             // Enabled Fraser Highland Shoppe
             $row['hg_qty'] ?? '0',                                 // Current Quantity Fraser Highland Shoppe
             $row['hg_qty'] ?? '0',                                 // New Quantity Fraser Highland Shoppe
@@ -426,11 +444,11 @@ class SquareCatalog extends PricebookFile implements OutputHandlerInterface
             '1',                                                   // Stock Alert Count Fraser Highland Shoppe
             $row['price'] ?? '0.00',                               // Price Fraser Highland Shoppe
             'N',                                                   // Enabled KSF (dev environment)
-            $row['hold_qty'] ?? '',                                // Current Quantity KSF
-            $row['hold_qty'] ?? '',                                // New Quantity KSF
-            '',                                                    // Stock Alert Enabled KSF
+            $ksfQty,                                               // Current Quantity KSF
+            $ksfQty,                                               // New Quantity KSF
+            'N',                                                   // Stock Alert Enabled KSF
             '',                                                    // Stock Alert Count KSF
-            '',                                                    // Price KSF
+            $price,                                                // Price KSF
             'N',                                                   // Tax - Future (5%)
             'Y'                                                    // Tax - GST (5%)
         ]);

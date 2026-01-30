@@ -30,3 +30,8 @@ prefs_schema.php
 *.zip~
 *.tmp
 *.bak
+
+# Local exports / samples (do not commit)
+/Square/
+/Woo_Export_Example/
+/html - Copy/

@@ -323,6 +323,25 @@ display_notification( __FILE__ . "::" . __LINE__ );
 
 				if( strlen( $row['description'] ) > 2 )
 				{
+					// Out Of Print (default prefix '-')
+					$oop_prefix = (isset($this->OUT_OF_PRINT_PREFIX) && strlen($this->OUT_OF_PRINT_PREFIX) > 0) ? $this->OUT_OF_PRINT_PREFIX : "-";
+					if( strncmp( $row['description'], $oop_prefix, 1 ) == 0 )
+					{
+						$oop_label = (isset($this->OUT_OF_PRINT_LABEL) && strlen($this->OUT_OF_PRINT_LABEL) > 0) ? $this->OUT_OF_PRINT_LABEL : "OUT-OF-PRINT";
+						$row['long_description'] .= " --" . $oop_label;
+						$row['description'] = substr( $row['description'], 1 ) . " --" . $oop_label;
+						$row['Name'] = substr( $row['Name'], 1 );
+						$row['backorder'] = 0;
+						$row['allow_customer_reviews'] = 0;
+						if( $row['hg_qty'] == 0 && $row['published'] == 1)
+						{
+							$row['published'] = 0;
+							$row['instock'] = 0;
+							display_notification( "Product out of print and ZERO inventory but is Active ::" . print_r( $row, true ) );
+						}
+						$oop_categories = (isset($this->OUT_OF_PRINT_CATEGORIES) && strlen($this->OUT_OF_PRINT_CATEGORIES) > 0) ? $this->OUT_OF_PRINT_CATEGORIES : "Out Of Print";
+						$row['category'] .= ", " . $oop_categories;
+					} else
  					//if( strncmp( $row['description'], '~', 1 ) == 0 )
  					if( strncmp( $row['description'], $this->DISCONTINUED_PREFIX, 1 ) == 0 )
                         		{

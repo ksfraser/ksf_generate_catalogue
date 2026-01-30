@@ -47,6 +47,9 @@ class ksf_generate_catalogue extends generic_fa_interface
 	var $DISCONTINUED_LABEL;     //!<string 
 	var $DISCONTINUED_PREFIX;    //!<string 
 	var $DISCONTINUED_CATEGORIES;    //!<string 
+	var $OUT_OF_PRINT_LABEL;     //!<string 
+	var $OUT_OF_PRINT_PREFIX;    //!<string 
+	var $OUT_OF_PRINT_CATEGORIES;    //!<string 
 	var $SPECIAL_ORDER_LABEL;     //!<string 
 	var $SPECIAL_ORDER_PREFIX;    //!<string 
 	var $SPECIAL_ORDER_CATEGORIES;    //!<string 
@@ -113,6 +116,9 @@ class ksf_generate_catalogue extends generic_fa_interface
 		$this->config_values[] = array( 'pref_name' => 'DISCONTINUED_LABEL', 'label' => 'Discontinued Label on products e.g. --DISCONTINUED' );
 		$this->config_values[] = array( 'pref_name' => 'DISCONTINUED_PREFIX', 'label' => 'Discontinued Prefix Character e.g. ~' );
 		$this->config_values[] = array( 'pref_name' => 'DISCONTINUED_CATEGORIES', 'label' => 'Discontinued Categories e.g. discontinued' );
+		$this->config_values[] = array( 'pref_name' => 'OUT_OF_PRINT_LABEL', 'label' => 'Out Of Print Label on products e.g. --OUT-OF-PRINT' );
+		$this->config_values[] = array( 'pref_name' => 'OUT_OF_PRINT_PREFIX', 'label' => 'Out Of Print Prefix Character (default -)' );
+		$this->config_values[] = array( 'pref_name' => 'OUT_OF_PRINT_CATEGORIES', 'label' => 'Out Of Print Categories e.g. out of print' );
 		$this->config_values[] = array( 'pref_name' => 'CLEARANCE_SALE_START_DATE', 'label' => 'Clearance Sale Start Date YYYY-MM-DD' );
 		$this->config_values[] = array( 'pref_name' => 'CLEARANCE_SALE_END_DATE', 'label' => 'Clearance Sale End Date YYYY-MM-DD' );
 		$this->config_values[] = array( 'pref_name' => 'CLEARANCE_LABEL', 'label' => 'Clearance Label on products e.g. --CLEARANCE' );

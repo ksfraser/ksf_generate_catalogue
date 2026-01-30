@@ -415,8 +415,12 @@ class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerI
     protected function processSpecialCategories(&$row)
     {
         $firstChar = substr($row['description'], 0, 1);
-        
-        if ($firstChar === $this->DISCONTINUED_PREFIX) {
+
+        $oopPrefix = $this->OUT_OF_PRINT_PREFIX ?: '-';
+
+        if ($firstChar === $oopPrefix) {
+            $this->processOutOfPrint($row);
+        } elseif ($firstChar === $this->DISCONTINUED_PREFIX) {
             $this->processDiscontinued($row);
         } elseif ($firstChar === $this->SPECIAL_ORDER_PREFIX) {
             $this->processSpecialOrder($row);
@@ -425,6 +429,31 @@ class WoocommerceImport extends BaseCatalogueGenerator implements OutputHandlerI
         } elseif ($firstChar === $this->CUSTOM_PREFIX) {
             $this->processCustom($row);
         }
+    }
+
+    /**
+     * Process out of print products
+     */
+    protected function processOutOfPrint(&$row)
+    {
+        $label = $this->OUT_OF_PRINT_LABEL ?: 'OUT-OF-PRINT';
+        $categories = $this->OUT_OF_PRINT_CATEGORIES ?: 'Out Of Print';
+
+        $row['long_description'] .= " --" . $label;
+        $row['description'] = substr($row['description'], 1) . " --" . $label;
+        $row['Name'] = substr($row['Name'], 1);
+        $row['backorder'] = 0;
+        $row['allow_customer_reviews'] = 0;
+
+        if ($row['hg_qty'] == 0 && $row['published'] == 1) {
+            $row['published'] = 0;
+            $row['instock'] = 0;
+            if (function_exists('display_notification')) {
+                display_notification("Product out of print and ZERO inventory but is Active :: " . print_r($row, true));
+            }
+        }
+
+        $row['category'] .= ", " . $categories;
     }
 
     /**

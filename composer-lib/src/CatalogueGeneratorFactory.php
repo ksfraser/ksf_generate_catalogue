@@ -318,9 +318,9 @@ class CatalogueGeneratorFactory
     {
         foreach ($config as $key => $value) {
             $method = 'set' . ucfirst($key);
-            if (method_exists($generator, $method)) {
-                $generator->$method($value);
-            }
+            // BaseCatalogueGenerator implements __call() to accept legacy/underscore
+            // pref keys (e.g. setDISCONTINUED_PREFIX, setOUT_OF_PRINT_PREFIX).
+            $generator->$method($value);
         }
     }
 }

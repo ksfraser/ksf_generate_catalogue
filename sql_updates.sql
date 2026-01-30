@@ -93,6 +93,22 @@ CREATE TABLE IF NOT EXISTS `0_woocommerce_parent_child` (
 -- ALTER TABLE `0_ksf_generate_catalogue_prefs` ADD COLUMN `enable_alcohol_tracking` tinyint(1) DEFAULT 1 COMMENT 'Enable alcohol content tracking';
 
 -- =====================================================
+-- 5b. Seed defaults for Out Of Print flags
+--
+-- These keys are used by the module config screen and WooCommerce export.
+-- Adjust the table name if your prefs table is different.
+--
+-- Expected prefs table shape:
+--   pref_name  (PK/unique)
+--   pref_value (text)
+-- =====================================================
+INSERT INTO `0_ksf_generate_catalogue_prefs` (pref_name, pref_value) VALUES
+  ('OUT_OF_PRINT_PREFIX', '-'),
+  ('OUT_OF_PRINT_LABEL', 'OUT-OF-PRINT'),
+  ('OUT_OF_PRINT_CATEGORIES', 'Out Of Print')
+ON DUPLICATE KEY UPDATE pref_value = VALUES(pref_value);
+
+-- =====================================================
 -- 6. Foreign Key Constraints (if desired)
 -- =====================================================
 -- Note: Uncomment these if you want strict referential integrity

@@ -302,6 +302,30 @@ abstract class BaseCatalogueGenerator implements GeneratorMetadataInterface
      * @since 1.0.0
      */
     protected $DISCONTINUED_CATEGORIES;
+
+    /**
+     * Label text for out of print items
+     *
+     * @var string
+     * @since 1.0.0
+     */
+    protected $OUT_OF_PRINT_LABEL;
+
+    /**
+     * Prefix character for out of print items
+     *
+     * @var string
+     * @since 1.0.0
+     */
+    protected $OUT_OF_PRINT_PREFIX;
+
+    /**
+     * Category names for out of print items
+     *
+     * @var string
+     * @since 1.0.0
+     */
+    protected $OUT_OF_PRINT_CATEGORIES;
     
     /**
      * Label text for special order items
@@ -548,6 +572,37 @@ abstract class BaseCatalogueGenerator implements GeneratorMetadataInterface
         $this->SALEPRICE_type = "Sale";
         $this->PRIMARY_LOC = "HG";
         $this->SECONDARY_LOC = "HOLD";
+
+        // Default Out Of Print indicator and label
+        $this->OUT_OF_PRINT_PREFIX = "-";
+        $this->OUT_OF_PRINT_LABEL = "OUT-OF-PRINT";
+        $this->OUT_OF_PRINT_CATEGORIES = "Out Of Print";
+    }
+
+    /**
+     * Flexible legacy configuration support.
+     *
+     * The FA module passes preference keys like OUT_OF_PRINT_PREFIX which the factory
+     * turns into method names like setOUT_OF_PRINT_PREFIX(). Rather than defining a setter
+     * per preference, we accept these calls and set the matching protected property.
+     *
+     * Unknown setters are ignored for backward compatibility.
+     *
+     * @param string $name
+     * @param array $arguments
+     * @return mixed
+     */
+    public function __call($name, $arguments)
+    {
+        if (strncmp($name, 'set', 3) === 0) {
+            $property = substr($name, 3);
+            if ($property !== '' && property_exists($this, $property)) {
+                $this->$property = $arguments[0] ?? null;
+            }
+            return null;
+        }
+
+        return null;
     }
 
     /**
