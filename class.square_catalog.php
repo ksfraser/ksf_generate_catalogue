@@ -7,6 +7,7 @@ global $path_to_root;
 * 20230601 Mantis 998 fix Inventory Counts.
 *          Mantin 2348 Extend Square columns.
 * 20240601 Mantis 2813 CSV Format change - Item Type
+* 20260130 Generating 0 rows.  Manually running the query generates 5014
 *
 ********************************************************/
 
@@ -45,12 +46,26 @@ class square_catalog extends pricebook_file
 //Permalink
 //Unit and Precision
 
-
-//Mantis 2813 - Add Item Type
+	}
+	/**//********************************************************
+	* Generate the query for Square CSV
+	*
+	* @since 20260130
+	*
+	* @param none
+	* @return int number of rows
+	*********************************************************/
+	function setQuery()
+	{
+		//Mantis 2813 - Add Item Type
+		//20260130 Query returning 0 rows - the "a" alias is defined at the bootom (locstock selector join)
+		//	When I hardcoded location codes to be HG and ZZZ it worked
+		display_notification( __FILE__ . "::" . __LINE__ . "::Locations Codes passed in: $this->PRIMARY_LOC :: $this->SECONDARY_LOC " );  
+		display_notification( __FILE__ . "::" . __LINE__ . "::VALUES:  " . print_r( $this, true )  );  
 		$this->query = "select 
 					ifnull( t.square_token, '') as token,
 					" . TB_PREF . "stock_master.stock_id, 
-					a.description, 
+					" . TB_PREF . "stock_master.description, 
 					a.long_description, 
 					a.category, 
 					a.lowstock,  
@@ -197,11 +212,11 @@ class square_catalog extends pricebook_file
 		Item Name is sometimes blank						Mantis 2458
 */
 
-	$bad_decode = array ( "&#039;", ";", "&#150;" );
-	$good_decode = array ( "'", ".", "." );
-	$row['description'] = str_replace( $bad_decode, $good_decode, html_entity_decode( $row['description'] ) );
-	$row['long_description'] = str_replace( $bad_decode, $good_decode, html_entity_decode( $row['long_description'] ) );
-	$row['category'] = str_replace( $bad_decode, $good_decode, html_entity_decode( $row['category'] ) );
+				$bad_decode = array ( "&#039;", ";", "&#150;" );
+				$good_decode = array ( "'", ".", "." );
+				$row['description'] = str_replace( $bad_decode, $good_decode, html_entity_decode( $row['description'] ) );
+				$row['long_description'] = str_replace( $bad_decode, $good_decode, html_entity_decode( $row['long_description'] ) );
+				$row['category'] = str_replace( $bad_decode, $good_decode, html_entity_decode( $row['category'] ) );
 
 //20231215 Removing "Regular" from variation name as similar products are getting mis-flagged as variations by Square.
 //	Square requires all variations to have the same description.
@@ -329,6 +344,11 @@ class square_catalog extends pricebook_file
 		if( $rowcount > 0 )
 			$this->email_file( "Square Catalog" );
 		return $rowcount++;
+	}
+	function set( $field, $value = NULL, $enforce_only_native_vars = true )
+	{
+		//display_notification( __FILE__ . "::" . __LINE__ . "::Setting $field::$value" );
+		parent::set( $field, $value, $enforce_only_native_vars );
 	}
 }
 

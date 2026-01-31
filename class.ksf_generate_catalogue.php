@@ -49,7 +49,7 @@ class ksf_generate_catalogue extends generic_fa_interface
 	var $DISCONTINUED_CATEGORIES;    //!<string 
 	var $OUT_OF_PRINT_LABEL;     //!<string 
 	var $OUT_OF_PRINT_PREFIX;    //!<string 
-	var $OUT_OF_PRINT_CATEGORIES;    //!<string 
+	var $OUT_OF_PRINT_CATEGORIES;    //!<string 	
 	var $SPECIAL_ORDER_LABEL;     //!<string 
 	var $SPECIAL_ORDER_PREFIX;    //!<string 
 	var $SPECIAL_ORDER_CATEGORIES;    //!<string 
@@ -133,7 +133,7 @@ class ksf_generate_catalogue extends generic_fa_interface
 		$this->config_values[] = array( 'pref_name' => 'max_rows_file', 'label' => 'Maximum rows per file' );
 		/** Mantis 3228 generate SKU without '*' for thermal printer - add ->thermal_printer var **/
 		$this->config_values[] = array( 'pref_name' => 'thermal_printer', 'label' => ' Are we using a thermal printer (T) or Avery Labels with 3of9(F) (bool)' );
-		
+	
 		// Square-specific preferences
 		$this->config_values[] = array( 'pref_name' => 'online_sale_pricebook_id', 'label' => 'Online Sale Pricebook ID', 'type' => 'sales_types' );
 		$this->config_values[] = array( 'pref_name' => 'use_sale_prices', 'label' => 'Use Sale Prices in Square Export', 'type' => 'yesno_list' );
@@ -150,7 +150,10 @@ class ksf_generate_catalogue extends generic_fa_interface
 		//$this->tabs[] = array( 'title' => '', 'action' => '', 'form' => '', 'hidden' => FALSE );
 		$this->tabs[] = array( 'title' => 'Install Module', 'action' => 'create', 'form' => 'install', 'hidden' => TRUE );
 		$this->tabs[] = array( 'title' => 'Export File', 'action' => 'exportfile', 'form' => 'write_file_form', 'hidden' => FALSE );
-		$this->tabs[] = array( 'title' => 'Generate Catalogue', 'action' => 'gencat', 'form' => 'form_pricebook', 'hidden' => TRUE );
+		$this->tabs[] = array( 'title' => 'Generated Catalogues', 'action' => 'gencat', 'form' => 'form_pricebook', 'hidden' => TRUE );
+//20260130 Add buttons and forms for Square and WooCommerce
+		$this->tabs[] = array( 'title' => 'Generated Square', 'action' => 'gensquare', 'form' => 'form_square', 'hidden' => TRUE );
+		$this->tabs[] = array( 'title' => 'Generated Woocommerce', 'action' => 'genwoo', 'form' => 'form_woocommerce', 'hidden' => TRUE );
 		$this->tabs[] = array( 'title' => 'Lables for a Purchase Order', 'action' => 'polabelsfile', 'form' => 'polabelsfile_form', 'hidden' => FALSE );
 		$this->tabs[] = array( 'title' => 'Labels Generated', 'action' => 'label_export_by_PO_Delivery', 'form' => 'label_export_by_PO_Delivery', 'hidden' => TRUE );
 		$this->tabs[] = array( 'title' => 'Lables for a Stock_id (SKU)', 'action' => 'skulabelsfile', 'form' => 'skulabelsfile_form', 'hidden' => FALSE );
@@ -205,28 +208,28 @@ class ksf_generate_catalogue extends generic_fa_interface
 		if( include_once( 'class.pricebook_file.php' ) )
 		{
 			$pb = new pricebook_file( $this->prefs_tablename );
+			//We have a list of config values.
+			//Transfer these values to the called class
 			foreach( $this->config_values as $arr )
 			{
 				$value = $arr["pref_name"];
 				$pb->$value = $this->$value;
 			}
 			$rowcount = $pb->create_file();
+			display_notification( "Created $rowcount rows for pricebook" );
 		}
-		if( include_once( 'class.square_catalog.php' ) )
+		else
 		{
-			$sc = new square_catalog( $this->prefs_tablename );
-			foreach( $this->config_values as $arr )
-			{
-				$value = $arr["pref_name"];
-				$sc->$value = $this->$value;
-			}
-			$rowcount = $sc->create_file();
+			display_warning( "Couldn't open pricebook_file" );
 		}
+		$rowcount = $this->form_square( false );
 		if( include_once( 'class.woocommerce_import.php' ) )
 		{
 			$sc = new woocommerce_import( $this->prefs_tablename );
 			//$sc->set( "RETAIL_type", $this->get( "RETAIL_type" ) );
 			//$sc->set( "SALEPRICE_type", $this->get( "SALEPRICE_type" ) );
+			//We have a list of config values.
+			//Transfer these values to the called class
 			foreach( $this->config_values as $arr )
 			{
 				$value = $arr["pref_name"];
@@ -234,18 +237,32 @@ class ksf_generate_catalogue extends generic_fa_interface
 			}
 			$sc->setQuery();
 			$rowcount = $sc->create_file();
+			display_notification( "Created $rowcount rows for Woocommerce" );
 		}
+		else
+		{
+			display_warning( "Couldn't open woocommerce_import" );
+		}
+/** 20260130 We aren't using WooPOS
 		if( include_once( 'class.WooPOS_Count.php' ) )
 		{
 			$woopos = new WooPOS_Count_file( $this->prefs_tablename );
+			//We have a list of config values.
+			//Transfer these values to the called class
 			foreach( $this->config_values as $arr )
 			{
 				$value = $arr["pref_name"];
 				$woopos->$value = $this->$value;
 			}
-			$woopos->create_file();
+			$rowcount = $woopos->create_file();
+			display_notification( "Created $rowcount rows for WooPOS" );
 			return $rowcount;
 		}
+		else
+		{
+			display_warning( "Couldn't open WooPOS_Count" );
+		}
+*/
 	}
 	/*******************************************************************//**
 	*
@@ -302,6 +319,74 @@ class ksf_generate_catalogue extends generic_fa_interface
 		return FALSE;
 	}
 	/*******************************************************************//**
+	* Generate SQUARE data file only
+	*
+	* @since 20260130
+	*
+	************************************************************************/
+	function form_square( $standalone = true )
+	{
+		//$this->create_price_book();
+		if( include_once( 'class.square_catalog.php' ) )
+		{
+			display_notification( __FILE__ . "::" . __LINE__ . "::Create Square Class" );
+			$sc = new square_catalog( $this->prefs_tablename );
+			//We have a list of config values.
+			//Transfer these values to the called class
+			foreach( $this->config_values as $arr )
+			{
+				$var = $arr["pref_name"];
+				$value = $this->get( $var );
+//				display_notification( __FILE__ . "::" . __LINE__ . "::Set Pref: $var::$value" );
+				$sc->set( $var, $value );
+			}
+			//Constructor was building query, before we passed in values!
+			$sc->setQuery();
+			$rowcount = $sc->create_file();
+			display_notification( __FILE__ . "::" . __LINE__ . "::Created $rowcount rows for Square" );
+		}
+		else
+		{
+			display_warning( "Couldn't open square_catalog" );
+		}
+		$this->email_file();
+		if( $standalone )
+			$this->call_table( '', "Square OK" );
+		return $rowcount;
+	}
+	/*******************************************************************//**
+	* Generate WooCommerce File ONLY
+	*
+	* @since 20260130
+	*
+	************************************************************************/
+	function form_woocommerce()
+	{
+		//$this->create_price_book();
+		if( include_once( 'class.woocommerce_import.php' ) )
+		{
+			$sc = new woocommerce_import( $this->prefs_tablename );
+			//$sc->set( "RETAIL_type", $this->get( "RETAIL_type" ) );
+			//$sc->set( "SALEPRICE_type", $this->get( "SALEPRICE_type" ) );
+			//We have a list of config values.
+			//Transfer these values to the called class
+			foreach( $this->config_values as $arr )
+			{
+				$value = $arr["pref_name"];
+				$sc->$value = $this->$value;
+			}
+			$sc->setQuery();
+			$rowcount = $sc->create_file();
+			display_notification( "Created $rowcount rows for Woocommerce" );
+		}
+		else
+		{
+			display_warning( "Couldn't open woocommerce_import" );
+		}
+		$this->email_file();
+		$this->call_table( '', "OK" );
+	}
+	/*******************************************************************//**
 	*
 	*
 	************************************************************************/
@@ -323,9 +408,12 @@ class ksf_generate_catalogue extends generic_fa_interface
 	function write_file_form()
 	{
 		if( $this->dolabels)
-			$this->call_table( 'gencat', "Create Catalogue File and Labels" );
+			$this->call_table( 'gencat', "Create ALL Catalogue File and Labels" );
 		else
-			$this->call_table( 'gencat', "Create Catalogue File" );
+			$this->call_table( 'gencat', "Create ALL Catalogue File" );
+		//20260130 Add buttons for Woo or Square ONLY
+			$this->call_table( 'gensquare', "Create Square File" );
+			$this->call_table( 'genwoo', "Create Woocommerce File" );
 	}
 	/*******************************************************************//**
 	* Form to request the stock_id to generate a label
